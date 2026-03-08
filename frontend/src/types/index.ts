@@ -88,3 +88,11 @@ export type DbFatigueSnapshot = {
   fatigue: number
   updated_at: string
 }
+
+export type LoggedSet = {
+  id: string
+  exerciseName: string
+  sets: number
+  reps: number
+  loggedAt: string // ISO timestamp
+}
