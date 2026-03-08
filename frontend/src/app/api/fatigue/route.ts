@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentFatigue } from '@/lib/db/fatigue'
+import { getFatigueState } from '@/lib/db/fatigue'
 
 export async function GET() {
   const supabase = await createClient()
@@ -12,6 +12,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const fatigue = await getCurrentFatigue()
+  const fatigue = await getFatigueState(user.id)
   return NextResponse.json(fatigue)
 }

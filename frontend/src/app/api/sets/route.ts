@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { logSet } from '@/lib/db/sessions'
+import { getTodaySession, logSet } from '@/lib/db/sessions'
 
 const logSetSchema = z.object({
   exerciseId: z.string().uuid(),
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
   }
 
   const { exerciseId, sets, reps } = parsed.data
-  const workoutSet = await logSet(exerciseId, sets, reps)
+  const session = await getTodaySession(user.id)
+  const workoutSet = await logSet(session.id, exerciseId, sets, reps)
   return NextResponse.json(workoutSet, { status: 201 })
 }

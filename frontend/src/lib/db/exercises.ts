@@ -9,7 +9,7 @@ function toExercise(row: DbExercise): Exercise {
   }
 }
 
-export async function getAllExercises(): Promise<Exercise[]> {
+export async function getExercises(): Promise<Exercise[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('exercises')
