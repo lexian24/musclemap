@@ -4,4 +4,4 @@ node_modules/
 .next/
 .DS_Store
 dist/
-coverage/
+coverage/frontend/tsconfig.tsbuildinfo
