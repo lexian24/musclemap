@@ -1,27 +1,59 @@
+'use client'
+
+import { useState } from 'react'
 import { fatigueToColor, muscleLabel } from '@/lib/fatigue'
 import type { MuscleGroup } from '@/types'
 
 type MuscleGroupPathProps = {
-  muscle: MuscleGroup
+  muscleId: MuscleGroup
   d: string
-  fatigue: number
+  fatigueValue: number
+  onClick?: () => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
-export function MuscleGroupPath({ muscle, d, fatigue }: MuscleGroupPathProps) {
-  const color = fatigueToColor(fatigue)
-  const label = muscleLabel(muscle)
+export function MuscleGroupPath({
+  muscleId,
+  d,
+  fatigueValue,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: MuscleGroupPathProps) {
+  const [hovered, setHovered] = useState(false)
+  const color = fatigueToColor(fatigueValue)
+  const label = muscleLabel(muscleId)
+
+  function handleMouseEnter() {
+    setHovered(true)
+    onMouseEnter?.()
+  }
+
+  function handleMouseLeave() {
+    setHovered(false)
+    onMouseLeave?.()
+  }
 
   return (
     <path
       d={d}
-      fill={color}
-      fillOpacity={fatigue > 0 ? 0.85 : 0.3}
-      stroke="#9CA3AF"
-      strokeWidth="0.5"
-      aria-label={`${label}: ${Math.round(fatigue * 100)}% fatigued`}
+      stroke="#6B7280"
+      strokeWidth="0.8"
+      style={{
+        fill: color,
+        fillOpacity: fatigueValue > 0 ? 0.85 : 0.35,
+        transition: 'fill 0.5s ease, filter 0.15s ease',
+        cursor: onClick ? 'pointer' : 'default',
+        filter: hovered ? 'brightness(1.25)' : 'none',
+      }}
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      aria-label={`${label}: ${Math.round(fatigueValue * 100)}% fatigued`}
     >
       <title>
-        {label}: {Math.round(fatigue * 100)}% fatigued
+        {label}: {Math.round(fatigueValue * 100)}% fatigued
       </title>
     </path>
   )

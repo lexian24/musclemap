@@ -79,9 +79,9 @@ function BodyView({
         {muscles.map(({ muscle, d }) => (
           <MuscleGroupPath
             key={muscle}
-            muscle={muscle}
+            muscleId={muscle}
             d={d}
-            fatigue={fatigueState[muscle]}
+            fatigueValue={fatigueState[muscle]}
           />
         ))}
       </svg>
