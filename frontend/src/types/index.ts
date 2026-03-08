@@ -72,27 +72,52 @@ export type DbExercise = {
   created_at: string
 }
 
-export type DbWorkoutSet = {
+export type DbWorkoutSession = {
   id: string
   user_id: string
-  exercise_id: string
-  reps: number
-  sets: number
   logged_at: string
 }
 
-export type DbFatigueSnapshot = {
+export type DbLoggedSet = {
   id: string
+  session_id: string
+  exercise_id: string
+  sets: number
+  reps: number
+  logged_at: string
+}
+
+export type DbMuscleFatigueCache = {
   user_id: string
-  muscle: MuscleGroup
-  fatigue: number
-  updated_at: string
+  muscle_group: string
+  fatigue_value: number
+  last_updated: string
+}
+
+// App-level types for session/set model
+export type TodaySession = {
+  id: string
+  userId: string
+  loggedAt: string
 }
 
 export type LoggedSet = {
   id: string
+  sessionId: string
+  exerciseId: string
   exerciseName: string
+  muscles: MuscleActivation[]
   sets: number
   reps: number
-  loggedAt: string // ISO timestamp
+  loggedAt: string
 }
+
+export type InsertedSet = {
+  id: string
+  sessionId: string
+  exerciseId: string
+  sets: number
+  reps: number
+  loggedAt: string
+}
+

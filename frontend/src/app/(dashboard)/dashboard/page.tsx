@@ -1,12 +1,19 @@
-import { getCurrentFatigue } from '@/lib/db/fatigue'
-import { getAllExercises } from '@/lib/db/exercises'
+import { createClient } from '@/lib/supabase/server'
+import { getFatigueState } from '@/lib/db/fatigue'
+import { getExercises } from '@/lib/db/exercises'
 import { MuscleMap } from '@/components/muscle-map/MuscleMap'
 import { ExerciseLogger } from '@/components/exercises/ExerciseLogger'
+import { emptyFatigueState } from '@/lib/fatigue'
 
 export default async function DashboardPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const [fatigueState, exercises] = await Promise.all([
-    getCurrentFatigue(),
-    getAllExercises(),
+    user ? getFatigueState(user.id) : Promise.resolve(emptyFatigueState()),
+    getExercises(),
   ])
 
   return (
