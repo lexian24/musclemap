@@ -83,17 +83,29 @@ export function DashboardClient({
   }
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row">
+    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
       {/* Left panel — muscle fatigue map */}
-      <section className="shrink-0 lg:w-72">
-        <h2 className="mb-4 text-lg font-semibold">Muscle Recovery</h2>
-        <FatigueMap fatigueState={fatigueState} />
-      </section>
+      <aside className="shrink-0 lg:w-80">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Muscle Recovery
+            </h2>
+          </div>
+          <FatigueMap fatigueState={fatigueState} />
+        </div>
+      </aside>
 
       {/* Right panel — exercise logger + history */}
-      <section className="min-w-0 flex-1 space-y-8">
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Choose Exercise</h2>
+      <section className="min-w-0 flex-1 space-y-6">
+        {/* Choose Exercise */}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Choose Exercise
+            </h2>
+          </div>
           <ExerciseGrid
             exercises={exercises}
             selectedId={selectedExerciseId}
@@ -101,21 +113,29 @@ export function DashboardClient({
           />
         </div>
 
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Log a Set</h2>
+        {/* Log a Set */}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Log a Set
+            </h2>
+          </div>
           <SetLogger exercise={selectedExercise} onLogSet={handleLogSet} />
           {mutation.isPending && (
-            <p className="mt-2 text-sm text-muted-foreground">Saving…</p>
+            <p className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Saving…
+            </p>
           )}
           {error && (
-            <div className="mt-3 flex items-center gap-3">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+              <p className="text-sm text-destructive flex-1">{error}</p>
               <button
                 onClick={() => {
                   setError(null)
                   mutation.reset()
                 }}
-                className="text-sm underline underline-offset-2"
+                className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors flex-shrink-0"
               >
                 Dismiss
               </button>
@@ -123,8 +143,18 @@ export function DashboardClient({
           )}
         </div>
 
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Today&apos;s Sets</h2>
+        {/* Today's Sets */}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Today&apos;s Sets
+            </h2>
+            {loggedSets.length > 0 && (
+              <span className="ml-auto text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                {loggedSets.length}
+              </span>
+            )}
+          </div>
           <LoggedSetsList sets={loggedSets} />
         </div>
       </section>

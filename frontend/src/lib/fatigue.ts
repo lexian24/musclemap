@@ -60,6 +60,9 @@ export function decayFatigue(state: FatigueState, elapsedMs: number): FatigueSta
 
 /**
  * Recalculates fatigue fresh from a list of logged sets, each with a timestamp.
+ * Uses forward-simulation: apply each set's fatigue, then decay only the time
+ * between consecutive sets (not all the way to now), preventing double-decay of
+ * older sets when multiple sets are logged.
  * Used on page load to avoid stale cached values.
  */
 export function recalculateFatigue(
@@ -71,16 +74,21 @@ export function recalculateFatigue(
   }>,
   now: Date = new Date(),
 ): FatigueState {
+  if (sets.length === 0) return emptyFatigueState()
+
   // Sort oldest first
   const sorted = [...sets].sort((a, b) => a.loggedAt.getTime() - b.loggedAt.getTime())
 
   let state = emptyFatigueState()
 
-  for (const entry of sorted) {
-    const elapsedMs = now.getTime() - entry.loggedAt.getTime()
-    // Apply fatigue then immediately decay by elapsed time
+  for (let i = 0; i < sorted.length; i++) {
+    const entry = sorted[i]
+    // Apply this set's fatigue contribution
     state = applySetFatigue(state, entry.muscles, entry.sets, entry.reps)
-    state = decayFatigue(state, elapsedMs)
+    // Decay from this set to the next set (or to now for the last entry)
+    const nextTime = i + 1 < sorted.length ? sorted[i + 1].loggedAt.getTime() : now.getTime()
+    const decayMs = Math.max(0, nextTime - entry.loggedAt.getTime())
+    state = decayFatigue(state, decayMs)
   }
 
   return state

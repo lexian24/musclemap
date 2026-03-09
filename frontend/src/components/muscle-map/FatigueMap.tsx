@@ -15,8 +15,8 @@ export function FatigueMap({ fatigueState, onMuscleClick }: FatigueMapProps) {
   const [hoveredMuscle, setHoveredMuscle] = useState<MuscleGroup | null>(null)
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="relative inline-flex">
+    <div className="flex flex-col gap-5">
+      <div className="relative inline-flex justify-center">
         <BodyDiagram
           fatigueState={fatigueState}
           onMuscleClick={onMuscleClick}
@@ -24,18 +24,22 @@ export function FatigueMap({ fatigueState, onMuscleClick }: FatigueMapProps) {
         />
         {hoveredMuscle !== null && (
           <div
-            className="pointer-events-none absolute -right-2 top-0 translate-x-full rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-md"
+            className="pointer-events-none absolute -right-2 top-4 translate-x-full"
             role="tooltip"
           >
-            <p className="text-sm font-semibold">{muscleLabel(hoveredMuscle)}</p>
-            <div className="mt-1 flex items-center gap-2">
-              <span
-                className="h-3 w-3 flex-shrink-0 rounded-full border border-gray-300"
-                style={{ backgroundColor: fatigueToColor(fatigueState[hoveredMuscle]) }}
-              />
-              <p className="text-xs text-gray-500">
-                {Math.round(fatigueState[hoveredMuscle] * 100)}% fatigued
+            <div className="rounded-lg border border-border bg-card/90 backdrop-blur-sm px-3 py-2.5 shadow-xl shadow-black/40 min-w-[120px]">
+              <p className="text-xs font-semibold text-foreground mb-1.5">
+                {muscleLabel(hoveredMuscle)}
               </p>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full border border-white/10"
+                  style={{ backgroundColor: fatigueToColor(fatigueState[hoveredMuscle]) }}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {Math.round(fatigueState[hoveredMuscle] * 100)}% fatigued
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -49,15 +53,15 @@ function FatigueLegend() {
   const gradientStops = FATIGUE_COLOR_STOPS.map((s) => `${s.color} ${s.at * 100}%`).join(', ')
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="space-y-2">
       <div
-        className="h-3 w-full rounded-full"
+        className="h-2 w-full rounded-full"
         style={{ background: `linear-gradient(to right, ${gradientStops})` }}
         aria-label="Fatigue color scale"
       />
-      <div className="flex justify-between text-xs text-gray-400">
-        <span>Fully recovered</span>
-        <span>Max fatigue</span>
+      <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+        <span>Recovered</span>
+        <span>Fatigued</span>
       </div>
     </div>
   )

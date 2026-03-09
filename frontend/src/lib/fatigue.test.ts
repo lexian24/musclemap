@@ -92,6 +92,28 @@ describe('recalculateFatigue', () => {
     }
   })
 
+  it('accumulates fatigue correctly across multiple sets on the same muscle', () => {
+    const now = new Date()
+    // Two chest sets logged: first 3h ago, second 1h ago
+    const firstSet = {
+      muscles: [{ muscle: 'chest' as const, intensity: 0.5 }],
+      sets: 3,
+      reps: 10,
+      loggedAt: new Date(now.getTime() - 3 * 3_600_000),
+    }
+    const secondSet = {
+      muscles: [{ muscle: 'chest' as const, intensity: 0.5 }],
+      sets: 3,
+      reps: 10,
+      loggedAt: new Date(now.getTime() - 1 * 3_600_000),
+    }
+    const state = recalculateFatigue([firstSet, secondSet], now)
+    // The second set should add to (not replace) the first set's remaining fatigue.
+    // With correct forward-simulation, chest should be higher than a single set 1h ago.
+    const singleSetState = recalculateFatigue([secondSet], now)
+    expect(state.chest).toBeGreaterThan(singleSetState.chest)
+  })
+
   it('reflects recent sets with more fatigue than old sets', () => {
     const now = new Date()
     const recentSet = {

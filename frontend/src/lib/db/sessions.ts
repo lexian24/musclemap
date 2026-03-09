@@ -77,9 +77,10 @@ export async function logSet(
   return toInsertedSet(data as DbLoggedSet)
 }
 
+// Supabase returns many-to-one joins (logged_sets.exercise_id → exercises.id)
+// as a single object, not an array.
 type LoggedSetRow = DbLoggedSet & {
-  // Supabase returns joined rows as an array when using select() without generated types
-  exercises: Array<{ name: string; muscles: MuscleActivation[] }>
+  exercises: { name: string; muscles: MuscleActivation[] } | null
 }
 
 /** Returns all sets logged today for the user, joined with exercise data. */
@@ -110,8 +111,8 @@ export async function getTodaySets(userId: string): Promise<LoggedSet[]> {
     id: row.id,
     sessionId: row.session_id,
     exerciseId: row.exercise_id,
-    exerciseName: row.exercises[0]?.name ?? '',
-    muscles: row.exercises[0]?.muscles ?? [],
+    exerciseName: row.exercises?.name ?? '',
+    muscles: row.exercises?.muscles ?? [],
     sets: row.sets,
     reps: row.reps,
     loggedAt: row.logged_at,
