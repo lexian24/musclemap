@@ -3,6 +3,24 @@
 import { useState } from 'react'
 import type { Exercise } from '@/types'
 
+// Intensity zone boundaries (effortRatio = reps / userMax).
+// UI-only — defined inline to avoid circular dependency with constants.ts.
+const INTENSITY_ZONE_LABELS = [
+  { label: 'Very Light', minEffort: 0,    maxEffort: 0.50, color: 'text-muted-foreground bg-secondary' },
+  { label: 'Light',      minEffort: 0.50, maxEffort: 0.65, color: 'text-blue-400 bg-blue-500/15' },
+  { label: 'Moderate',   minEffort: 0.65, maxEffort: 0.75, color: 'text-green-400 bg-green-500/15' },
+  { label: 'Heavy',      minEffort: 0.75, maxEffort: 0.85, color: 'text-amber-400 bg-amber-500/15' },
+  { label: 'Very Heavy', minEffort: 0.85, maxEffort: 0.92, color: 'text-orange-400 bg-orange-500/15' },
+  { label: 'Max Effort', minEffort: 0.92, maxEffort: 1.01, color: 'text-red-400 bg-red-500/15' },
+] as const
+
+function getIntensityZone(effortRatio: number): typeof INTENSITY_ZONE_LABELS[number] {
+  for (const zone of INTENSITY_ZONE_LABELS) {
+    if (effortRatio >= zone.minEffort && effortRatio < zone.maxEffort) return zone
+  }
+  return INTENSITY_ZONE_LABELS[INTENSITY_ZONE_LABELS.length - 1]
+}
+
 type SetLoggerProps = {
   exercise: Exercise | null
   userMax?: number
@@ -152,6 +170,18 @@ export function SetLogger({ exercise, userMax, disabled = false, onLogSet }: Set
           onChange={setReps}
         />
       </div>
+
+      {userMax !== undefined && userMax > 0 && reps > 0 && !isTimeBased && (() => {
+        const effortRatio = reps / userMax
+        const zone = getIntensityZone(Math.min(effortRatio, 1))
+        return (
+          <p className="text-xs">
+            <span className={`inline-block px-2 py-0.5 rounded-full font-medium leading-none ${zone.color}`}>
+              {zone.label}
+            </span>
+          </p>
+        )
+      })()}
 
       {success && (
         <p className="text-sm text-green-400 flex items-center gap-1.5">

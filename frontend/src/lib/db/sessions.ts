@@ -5,7 +5,9 @@ import type {
   InsertedSet,
   LoggedSet,
   MuscleActivation,
+  MuscleGroup,
   TodaySession,
+  WeeklyVolume,
 } from '@/types'
 
 export type HistoryDay = {
@@ -124,6 +126,12 @@ export async function getTodaySets(userId: string): Promise<LoggedSet[]> {
   }))
 }
 
+type WeeklySessionRow = {
+  id: string
+  logged_at: string
+  logged_sets: LoggedSetRow[]
+}
+
 type HistorySessionRow = {
   id: string
   logged_at: string
@@ -176,4 +184,40 @@ export async function getWorkoutHistory(userId: string, limit = 30): Promise<His
   return Array.from(dayMap.entries())
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([date, sets]) => ({ date, sets }))
+}
+
+/**
+ * Returns the total effective sets per muscle group logged in the past 7 days.
+ * "Effective sets" = logged_set.sets × muscle_activation (each activated muscle
+ * counts the set count, not fractional).
+ */
+export async function getWeeklyVolume(userId: string): Promise<WeeklyVolume> {
+  const supabase = await createClient()
+
+  const cutoff = new Date()
+  cutoff.setUTCDate(cutoff.getUTCDate() - 7)
+  cutoff.setUTCHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('id, logged_at, logged_sets(id, session_id, exercise_id, sets, reps, logged_at, exercises(name, muscles))')
+    .eq('user_id', userId)
+    .gte('logged_at', cutoff.toISOString())
+
+  if (error) throw new Error(`Failed to fetch weekly volume: ${error.message}`)
+
+  const rows = data as unknown as WeeklySessionRow[]
+  const totals: Partial<Record<MuscleGroup, number>> = {}
+
+  for (const session of rows) {
+    for (const row of session.logged_sets) {
+      const muscles = row.exercises?.muscles ?? []
+      for (const activation of muscles) {
+        const current = totals[activation.muscle] ?? 0
+        totals[activation.muscle] = current + row.sets
+      }
+    }
+  }
+
+  return totals
 }

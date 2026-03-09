@@ -1,11 +1,37 @@
 import {
   FATIGUE_COLOR_STOPS,
   FATIGUE_DECAY_PER_HOUR,
+  INTENSITY_ZONES,
   MUSCLE_RECOVERY_MULTIPLIERS,
+  SESSION_SFR_MULTIPLIERS,
   VOLUME_NORMALISER,
 } from '@/lib/constants'
+import type { IntensityZone } from '@/lib/constants'
 import { ALL_MUSCLE_GROUPS } from '@/types'
 import type { FatigueState, MuscleActivation, MuscleGroup } from '@/types'
+
+/**
+ * Returns the intensity zone for a given effort ratio (reps / userMax).
+ * If effortRatio is out of all zone ranges, falls back to the Moderate zone.
+ */
+export function getIntensityZone(effortRatio: number): IntensityZone {
+  const clamped = Math.max(0, effortRatio)
+  for (const zone of INTENSITY_ZONES) {
+    if (clamped >= zone.minEffort && clamped < zone.maxEffort) {
+      return zone
+    }
+  }
+  // Fallback: Moderate zone (index 2)
+  return INTENSITY_ZONES[2]
+}
+
+/**
+ * Returns the session SFR multiplier for the Nth set of a muscle this session.
+ * setNumber is 1-indexed. Returns 1.6 for 7+ sets (diminishing returns plateau).
+ */
+export function getSessionSfrMultiplier(setNumber: number): number {
+  return SESSION_SFR_MULTIPLIERS[setNumber] ?? 1.6
+}
 
 /** Returns a zeroed FatigueState (all muscles fully recovered). */
 export function emptyFatigueState(): FatigueState {
@@ -17,12 +43,15 @@ export function emptyFatigueState(): FatigueState {
 /**
  * Applies fatigue from one logged set to the current fatigue state.
  *
- * @param current   Current fatigue state
- * @param muscles   Muscles activated by the exercise, with intensity 0–1
- * @param sets      Number of sets performed
- * @param reps      Reps per set
- * @param userMax   Optional personal 1RM — if provided, volume = sets * (reps / userMax);
- *                  otherwise falls back to (sets * reps) / VOLUME_NORMALISER
+ * @param current           Current fatigue state
+ * @param muscles           Muscles activated by the exercise, with intensity 0–1
+ * @param sets              Number of sets performed
+ * @param reps              Reps per set
+ * @param userMax           Optional personal max reps — if provided, enables the
+ *                          intensity-zone and SFR path; otherwise falls back to
+ *                          (sets * reps) / VOLUME_NORMALISER (backward-compat)
+ * @param sessionSetCounts  How many sets of each muscle have already been logged
+ *                          this session, used to apply SFR diminishing returns
  */
 export function applySetFatigue(
   current: FatigueState,
@@ -30,16 +59,29 @@ export function applySetFatigue(
   sets: number,
   reps: number,
   userMax?: number,
+  sessionSetCounts?: Partial<Record<MuscleGroup, number>>,
 ): FatigueState {
-  const volume =
-    userMax !== undefined && userMax > 0
-      ? sets * (reps / userMax)
-      : (sets * reps) / VOLUME_NORMALISER
   const next = { ...current }
 
-  for (const { muscle, intensity } of muscles) {
-    const delta = intensity * volume
-    next[muscle] = Math.min(1, next[muscle] + delta)
+  if (userMax !== undefined && userMax > 0) {
+    // New path: intensity-zone + session SFR multiplier
+    const effortRatio = Math.min(1, reps / userMax)
+    const zone = getIntensityZone(effortRatio)
+
+    for (const { muscle, intensity } of muscles) {
+      const setNumber = (sessionSetCounts?.[muscle] ?? 0) + 1
+      const sfrMultiplier = getSessionSfrMultiplier(setNumber)
+      const volume = sets * effortRatio * zone.fatigueMultiplier * sfrMultiplier
+      const delta = intensity * volume
+      next[muscle] = Math.min(1, next[muscle] + delta)
+    }
+  } else {
+    // Old path: no userMax — use original VOLUME_NORMALISER formula
+    const volume = (sets * reps) / VOLUME_NORMALISER
+    for (const { muscle, intensity } of muscles) {
+      const delta = intensity * volume
+      next[muscle] = Math.min(1, next[muscle] + delta)
+    }
   }
 
   return next
@@ -69,6 +111,10 @@ export function decayFatigue(state: FatigueState, elapsedMs: number): FatigueSta
  * Uses forward-simulation: apply each set's fatigue, then decay only the time
  * between consecutive sets (not all the way to now), preventing double-decay of
  * older sets when multiple sets are logged.
+ *
+ * Session set counts are tracked per UTC calendar day so SFR diminishing returns
+ * are correctly applied within each day and reset across days.
+ *
  * Used on page load to avoid stale cached values.
  */
 export function recalculateFatigue(
@@ -87,11 +133,34 @@ export function recalculateFatigue(
   const sorted = [...sets].sort((a, b) => a.loggedAt.getTime() - b.loggedAt.getTime())
 
   let state = emptyFatigueState()
+  let currentDay = ''
+  let sessionSetCounts: Partial<Record<MuscleGroup, number>> = {}
 
   for (let i = 0; i < sorted.length; i++) {
     const entry = sorted[i]
-    // Apply this set's fatigue contribution
-    state = applySetFatigue(state, entry.muscles, entry.sets, entry.reps, entry.userMax)
+    const entryDay = entry.loggedAt.toISOString().slice(0, 10)
+
+    // Reset session set counts when we move to a new UTC calendar day
+    if (entryDay !== currentDay) {
+      currentDay = entryDay
+      sessionSetCounts = {}
+    }
+
+    // Apply this set's fatigue contribution (with session SFR tracking)
+    state = applySetFatigue(
+      state,
+      entry.muscles,
+      entry.sets,
+      entry.reps,
+      entry.userMax,
+      sessionSetCounts,
+    )
+
+    // Increment session set counts for each activated muscle
+    for (const { muscle } of entry.muscles) {
+      sessionSetCounts[muscle] = (sessionSetCounts[muscle] ?? 0) + entry.sets
+    }
+
     // Decay from this set to the next set (or to now for the last entry)
     const nextTime = i + 1 < sorted.length ? sorted[i + 1].loggedAt.getTime() : now.getTime()
     const decayMs = Math.max(0, nextTime - entry.loggedAt.getTime())

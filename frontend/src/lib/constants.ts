@@ -33,22 +33,60 @@ export const FATIGUE_COLOR_STOPS: Array<{ at: number; color: string }> = [
  */
 export const MUSCLE_RECOVERY_MULTIPLIERS: Record<MuscleGroup, number> = {
   chest: 0.33,        // 60h — large pec major, moderate eccentric damage
-  front_delts: 0.56,  // 36h — small, high pressing frequency tolerance
-  side_delts: 0.56,   // 36h — small, isolation-dominant
-  rear_delts: 0.56,   // 36h — small, often undertrained
+  front_delts: 0.50,  // 40h — upper compound but small muscle
+  side_delts: 0.67,   // 30h — isolation, small muscle
+  rear_delts: 0.50,   // 40h — upper compound, moderate size
   biceps: 0.42,       // 48h — moderate; eccentrics from pulling cause DOMS
   triceps: 0.42,      // 48h — moderate; heavy pressing involvement
   forearms: 0.83,     // 24h — slow-twitch dominant, high endurance capacity
   upper_back: 0.33,   // 60h — traps/rhomboids, dense muscle
   lats: 0.33,         // 60h — large pulling muscle, 48-72h in literature
-  lower_back: 0.28,   // 72h — spinal erectors, high fatigue sensitivity, injury risk
+  lower_back: 0.25,   // 80h — spinal erectors, highest fatigue sensitivity, injury risk
   abs: 0.83,          // 24h — evolved for endurance, slow-twitch dominant
   obliques: 0.83,     // 24h — same as abs
   glutes: 0.28,       // 72h — largest muscle, powerful contractions
   quads: 0.28,        // 72h — massive volume, high load even bodyweight
-  hamstrings: 0.28,   // 72h — highest eccentric damage, longest recovery
+  hamstrings: 0.25,   // 80h — highest eccentric damage, slowest recovery
   calves: 0.56,       // 36h — soleus is very slow-twitch; recovers faster than size suggests
 }
+
+/**
+ * Intensity zones based on effort ratio (reps / userMax).
+ * Maps to approximate % 1RM effort for calisthenics.
+ * Higher intensity → more fatigue per set (exponential cost near failure).
+ *
+ * fatigueMultiplier: scales the per-set fatigue delta.
+ *   Light sets (easy, far from failure) cost ~0.7× baseline.
+ *   Max effort (near failure) costs ~2.2× baseline.
+ *
+ * recoveryBoost: additional multiplier applied to the muscle's
+ *   base decay rate when this zone is used. 1.0 = no change.
+ *   Heavier training slows recovery (muscles stay fatigued longer).
+ */
+export const INTENSITY_ZONES = [
+  { label: 'Very Light', minEffort: 0,    maxEffort: 0.50, fatigueMultiplier: 0.7,  recoveryBoost: 1.3  },
+  { label: 'Light',      minEffort: 0.50, maxEffort: 0.65, fatigueMultiplier: 0.85, recoveryBoost: 1.15 },
+  { label: 'Moderate',   minEffort: 0.65, maxEffort: 0.75, fatigueMultiplier: 1.0,  recoveryBoost: 1.0  },
+  { label: 'Heavy',      minEffort: 0.75, maxEffort: 0.85, fatigueMultiplier: 1.4,  recoveryBoost: 0.85 },
+  { label: 'Very Heavy', minEffort: 0.85, maxEffort: 0.92, fatigueMultiplier: 1.8,  recoveryBoost: 0.75 },
+  { label: 'Max Effort', minEffort: 0.92, maxEffort: 1.01, fatigueMultiplier: 2.2,  recoveryBoost: 0.65 },
+] as const
+
+export type IntensityZone = typeof INTENSITY_ZONES[number]
+
+/**
+ * Session SFR (Stimulus-to-Fatigue Ratio) diminishing returns.
+ * After the 4th set of the same muscle in one session, fatigue cost rises.
+ * setNumber is 1-indexed (1 = first set for that muscle this session).
+ */
+export const SESSION_SFR_MULTIPLIERS: Record<number, number> = {
+  1: 1.0,
+  2: 1.0,
+  3: 1.0,
+  4: 1.0,
+  5: 1.3,
+  6: 1.3,
+} // For 7+ sets, use 1.6 (see getSessionSfrMultiplier helper)
 
 /**
  * Evidence-based weekly volume targets per muscle group (direct sets per week).
