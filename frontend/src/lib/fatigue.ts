@@ -17,18 +17,24 @@ export function emptyFatigueState(): FatigueState {
 /**
  * Applies fatigue from one logged set to the current fatigue state.
  *
- * @param current  Current fatigue state
- * @param muscles  Muscles activated by the exercise, with intensity 0–1
- * @param sets     Number of sets performed
- * @param reps     Reps per set
+ * @param current   Current fatigue state
+ * @param muscles   Muscles activated by the exercise, with intensity 0–1
+ * @param sets      Number of sets performed
+ * @param reps      Reps per set
+ * @param userMax   Optional personal 1RM — if provided, volume = sets * (reps / userMax);
+ *                  otherwise falls back to (sets * reps) / VOLUME_NORMALISER
  */
 export function applySetFatigue(
   current: FatigueState,
   muscles: MuscleActivation[],
   sets: number,
   reps: number,
+  userMax?: number,
 ): FatigueState {
-  const volume = (sets * reps) / VOLUME_NORMALISER
+  const volume =
+    userMax !== undefined && userMax > 0
+      ? sets * (reps / userMax)
+      : (sets * reps) / VOLUME_NORMALISER
   const next = { ...current }
 
   for (const { muscle, intensity } of muscles) {
@@ -71,6 +77,7 @@ export function recalculateFatigue(
     sets: number
     reps: number
     loggedAt: Date
+    userMax?: number
   }>,
   now: Date = new Date(),
 ): FatigueState {
@@ -84,7 +91,7 @@ export function recalculateFatigue(
   for (let i = 0; i < sorted.length; i++) {
     const entry = sorted[i]
     // Apply this set's fatigue contribution
-    state = applySetFatigue(state, entry.muscles, entry.sets, entry.reps)
+    state = applySetFatigue(state, entry.muscles, entry.sets, entry.reps, entry.userMax)
     // Decay from this set to the next set (or to now for the last entry)
     const nextTime = i + 1 < sorted.length ? sorted[i + 1].loggedAt.getTime() : now.getTime()
     const decayMs = Math.max(0, nextTime - entry.loggedAt.getTime())

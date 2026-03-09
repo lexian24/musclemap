@@ -40,10 +40,20 @@ export type MuscleActivation = {
   intensity: number // 0.0 to 1.0 — how hard this muscle worked
 }
 
+export type ExerciseUnit = 'reps' | 'seconds'
+export type ExerciseCategory = 'push' | 'pull' | 'core' | 'legs'
+
 export type Exercise = {
   id: string
   name: string
   muscles: MuscleActivation[]
+  unit?: ExerciseUnit      // default 'reps' if absent
+  category?: ExerciseCategory
+}
+
+export type UserExerciseMax = {
+  exerciseId: string
+  maxValue: number  // max reps or max seconds
 }
 
 export type FatigueState = Record<MuscleGroup, number> // 0.0 (fresh) to 1.0 (destroyed)
@@ -69,6 +79,8 @@ export type DbExercise = {
   id: string
   name: string
   muscles: MuscleActivation[]
+  unit: 'reps' | 'seconds' | null
+  category: 'push' | 'pull' | 'core' | 'legs' | null
   created_at: string
 }
 

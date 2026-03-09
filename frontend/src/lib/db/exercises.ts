@@ -6,6 +6,8 @@ function toExercise(row: DbExercise): Exercise {
     id: row.id,
     name: row.name,
     muscles: row.muscles,
+    unit: row.unit ?? 'reps',
+    category: row.category ?? undefined,
   }
 }
 
