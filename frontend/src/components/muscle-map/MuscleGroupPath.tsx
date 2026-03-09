@@ -8,6 +8,7 @@ type MuscleGroupPathProps = {
   muscleId: MuscleGroup
   d: string
   fatigueValue: number
+  clipPathId?: string
   onClick?: () => void
   onMouseEnter?: () => void
   onMouseLeave?: () => void
@@ -17,6 +18,7 @@ export function MuscleGroupPath({
   muscleId,
   d,
   fatigueValue,
+  clipPathId,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -38,18 +40,21 @@ export function MuscleGroupPath({
     onMouseLeave?.()
   }
 
-  // When at rest: subtle dark overlay to delineate muscle boundaries
-  // When fatigued: progressively brighter crimson tones
-  const fillOpacity = hasSignificantFatigue
-    ? 0.78 + fatigueValue * 0.2   // 0.79 → 1.0 as fatigue climbs
-    : 0.45                         // subtle resting overlay
+  // Resting: visible medium gray (#9CA3AF) at good opacity against the dark (#151C24) body.
+  // #9CA3AF at 0.75 opacity over #151C24 ≈ #6B737F — clearly distinguishable gray.
+  // Fatigued: full crimson color scale, opacity scales 0.80→1.0 with fatigue level.
+  const restingFill = '#9CA3AF'
+  const restingOpacity = 0.75
+  const fatiguedOpacity = 0.82 + fatigueValue * 0.18  // 0.82 → 1.0
 
-  // Build drop-shadow glow filter for high fatigue muscles
+  const fillOpacity = hasSignificantFatigue ? fatiguedOpacity : restingOpacity
+
+  // Glow filter for high-fatigue muscles
   let filter = 'none'
   if (hovered && hasHighFatigue) {
-    filter = `drop-shadow(0 0 4px ${color}cc) brightness(1.2)`
+    filter = `drop-shadow(0 0 4px ${color}cc) brightness(1.15)`
   } else if (hovered) {
-    filter = 'brightness(1.3)'
+    filter = 'brightness(1.25)'
   } else if (hasHighFatigue) {
     filter = `drop-shadow(0 0 3px ${color}88)`
   }
@@ -57,11 +62,12 @@ export function MuscleGroupPath({
   return (
     <path
       d={d}
-      stroke={hasSignificantFatigue ? color : '#4B5563'}
-      strokeWidth={hasSignificantFatigue ? '0.5' : '0.4'}
-      strokeOpacity={hasSignificantFatigue ? 0.6 : 0.7}
+      clipPath={clipPathId ? `url(#${clipPathId})` : undefined}
+      stroke={hasSignificantFatigue ? color : '#6B7280'}
+      strokeWidth="0.5"
+      strokeOpacity={hasSignificantFatigue ? 0.5 : 0.6}
       style={{
-        fill: hasSignificantFatigue ? color : '#374151',
+        fill: hasSignificantFatigue ? color : restingFill,
         fillOpacity,
         transition: 'fill 0.5s ease, fill-opacity 0.5s ease, filter 0.2s ease',
         cursor: onClick ? 'pointer' : 'default',
