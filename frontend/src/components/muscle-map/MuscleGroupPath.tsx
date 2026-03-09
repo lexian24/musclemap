@@ -51,10 +51,6 @@ export function MuscleGroupPath({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       aria-label={`${label}: ${Math.round(fatigueValue * 100)}% fatigued`}
-    >
-      <title>
-        {label}: {Math.round(fatigueValue * 100)}% fatigued
-      </title>
-    </path>
+    />
   )
 }
