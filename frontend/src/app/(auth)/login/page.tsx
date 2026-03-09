@@ -15,7 +15,7 @@ export default async function LoginPage() {
       <div>
         <h1 className="text-2xl font-bold">MuscleMap</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Sign in to track your recovery
+          Track your recovery
         </p>
       </div>
       <LoginForm />
