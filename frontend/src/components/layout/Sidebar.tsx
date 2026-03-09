@@ -1,23 +1,68 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
 
-const navItems: Array<{ href: Route; label: string }> = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/history', label: 'History' },
+type NavItem = {
+  href: Route
+  label: string
+  icon: React.ReactNode
+}
+
+function LayoutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+  )
+}
+
+function ClockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
+
+const navItems: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: <LayoutIcon /> },
+  { href: '/dashboard/history', label: 'History', icon: <ClockIcon /> },
 ]
 
 export function Sidebar() {
+  const pathname = usePathname()
+
   return (
-    <nav className="w-48 border-r border-border bg-background p-4 space-y-1 hidden md:block">
-      {navItems.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          {label}
-        </Link>
-      ))}
+    <nav className="w-52 border-r border-border bg-card/50 p-3 space-y-0.5 hidden md:flex flex-col flex-shrink-0">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-3 pt-2 pb-1">
+        Navigation
+      </p>
+      {navItems.map(({ href, label, icon }) => {
+        const isActive = pathname === href
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={[
+              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary/15 text-primary'
+                : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+            ].join(' ')}
+          >
+            <span className={isActive ? 'text-primary' : 'text-muted-foreground/70'}>
+              {icon}
+            </span>
+            {label}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

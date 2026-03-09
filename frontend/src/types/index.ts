@@ -121,3 +121,10 @@ export type InsertedSet = {
   loggedAt: string
 }
 
+/** Weekly volume targets for a single muscle group. */
+export type WeeklyVolumeTarget = {
+  minSets: number      // MEV — minimum to maintain/make progress
+  optimalSets: number  // MAV — sweet spot for hypertrophy
+  maxSets: number      // MRV — ceiling beyond which recovery is compromised
+}
+
