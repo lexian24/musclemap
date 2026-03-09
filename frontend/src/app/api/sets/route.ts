@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { getTodaySession, logSet } from '@/lib/db/sessions'
+import { getTodaySession, logSet, getTodaySets } from '@/lib/db/sessions'
+import { updateFatigueCache } from '@/lib/db/fatigue'
+import { recalculateFatigue } from '@/lib/fatigue'
 
 const logSetSchema = z.object({
   exerciseId: z.string().uuid(),
@@ -32,5 +34,18 @@ export async function POST(request: Request) {
   const { exerciseId, sets, reps } = parsed.data
   const session = await getTodaySession(user.id)
   const workoutSet = await logSet(session.id, exerciseId, sets, reps)
-  return NextResponse.json(workoutSet, { status: 201 })
+
+  // Recalculate fatigue from all of today's sets (including the one just inserted)
+  const todaySets = await getTodaySets(user.id)
+  const newFatigue = recalculateFatigue(
+    todaySets.map((s) => ({
+      muscles: s.muscles,
+      sets: s.sets,
+      reps: s.reps,
+      loggedAt: new Date(s.loggedAt),
+    })),
+  )
+  await updateFatigueCache(user.id, newFatigue)
+
+  return NextResponse.json({ ...workoutSet, fatigue: newFatigue }, { status: 201 })
 }
