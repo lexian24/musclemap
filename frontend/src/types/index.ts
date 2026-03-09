@@ -140,3 +140,6 @@ export type WeeklyVolumeTarget = {
   maxSets: number      // MRV — ceiling beyond which recovery is compromised
 }
 
+/** Total effective sets per muscle group logged in the past 7 days. */
+export type WeeklyVolume = Partial<Record<MuscleGroup, number>>
+

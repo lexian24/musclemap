@@ -4,6 +4,8 @@ import {
   emptyFatigueState,
   fatigueToColor,
   formatFatigue,
+  getIntensityZone,
+  getSessionSfrMultiplier,
   recalculateFatigue,
 } from './fatigue'
 
@@ -163,5 +165,86 @@ describe('formatFatigue', () => {
     expect(formatFatigue(0.12345)).toBe(0.12)
     expect(formatFatigue(0.999)).toBe(1)
     expect(formatFatigue(0.005)).toBe(0.01)
+  })
+})
+
+describe('getIntensityZone', () => {
+  it('returns Very Light zone for effort ratio 0.3', () => {
+    expect(getIntensityZone(0.3).label).toBe('Very Light')
+  })
+
+  it('returns Light zone for effort ratio 0.5', () => {
+    // 0.5 is the minEffort of Light (and maxEffort of Very Light, exclusive)
+    expect(getIntensityZone(0.5).label).toBe('Light')
+  })
+
+  it('returns Moderate zone for effort ratio 0.7', () => {
+    expect(getIntensityZone(0.7).label).toBe('Moderate')
+  })
+
+  it('returns Heavy zone for effort ratio 0.8', () => {
+    expect(getIntensityZone(0.8).label).toBe('Heavy')
+  })
+
+  it('returns Very Heavy zone for effort ratio 0.9', () => {
+    expect(getIntensityZone(0.9).label).toBe('Very Heavy')
+  })
+
+  it('returns Max Effort zone for effort ratio 1.0', () => {
+    expect(getIntensityZone(1.0).label).toBe('Max Effort')
+  })
+})
+
+describe('getSessionSfrMultiplier', () => {
+  it('returns 1.0 for sets 1 through 4', () => {
+    expect(getSessionSfrMultiplier(1)).toBe(1.0)
+    expect(getSessionSfrMultiplier(2)).toBe(1.0)
+    expect(getSessionSfrMultiplier(3)).toBe(1.0)
+    expect(getSessionSfrMultiplier(4)).toBe(1.0)
+  })
+
+  it('returns 1.3 for sets 5 and 6', () => {
+    expect(getSessionSfrMultiplier(5)).toBe(1.3)
+    expect(getSessionSfrMultiplier(6)).toBe(1.3)
+  })
+
+  it('returns 1.6 for 7 or more sets', () => {
+    expect(getSessionSfrMultiplier(7)).toBe(1.6)
+    expect(getSessionSfrMultiplier(10)).toBe(1.6)
+    expect(getSessionSfrMultiplier(20)).toBe(1.6)
+  })
+})
+
+describe('applySetFatigue — intensity zone path', () => {
+  it('generates more fatigue at high effort (0.9) than at low effort (0.5) for same sets', () => {
+    const state = emptyFatigueState()
+    // Use low intensity (0.1) so neither result caps at 1.0, allowing clear comparison
+    const muscles = [{ muscle: 'chest' as const, intensity: 0.1 }]
+    // userMax = 20 activates the new intensity-zone path
+    const highEffort = applySetFatigue(state, muscles, 1, 18, 20) // effortRatio = 0.9 → Very Heavy, multiplier 1.8
+    const lowEffort  = applySetFatigue(state, muscles, 1, 10, 20) // effortRatio = 0.5 → Light, multiplier 0.85
+    expect(highEffort.chest).toBeGreaterThan(lowEffort.chest)
+  })
+
+  it('5th set of same muscle generates more fatigue than 1st set (SFR diminishing returns)', () => {
+    const state = emptyFatigueState()
+    const muscles = [{ muscle: 'chest' as const, intensity: 1.0 }]
+    const userMax = 20
+    const reps = 14 // effortRatio = 0.7 (Moderate zone)
+
+    // First set: sessionSetCounts = {} → setNumber 1 → SFR 1.0
+    const firstSet = applySetFatigue(state, muscles, 1, reps, userMax, {})
+
+    // Fifth set: sessionSetCounts = { chest: 4 } → setNumber 5 → SFR 1.3
+    const fifthSet = applySetFatigue(state, muscles, 1, reps, userMax, { chest: 4 })
+
+    expect(fifthSet.chest).toBeGreaterThan(firstSet.chest)
+  })
+
+  it('existing tests without userMax still use old VOLUME_NORMALISER path', () => {
+    const state = emptyFatigueState()
+    // 3 sets × 10 reps / 30 (VOLUME_NORMALISER) = 1.0 volume; intensity 0.8 → 0.8
+    const next = applySetFatigue(state, [{ muscle: 'chest', intensity: 0.8 }], 3, 10)
+    expect(next.chest).toBeCloseTo(0.8)
   })
 })

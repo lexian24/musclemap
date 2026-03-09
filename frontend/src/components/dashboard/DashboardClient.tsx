@@ -6,14 +6,16 @@ import { FatigueMap } from '@/components/muscle-map/FatigueMap'
 import { ExerciseGrid } from '@/components/exercises/ExerciseGrid'
 import { SetLogger } from '@/components/exercises/SetLogger'
 import { LoggedSetsList } from '@/components/exercises/LoggedSetsList'
-import { applySetFatigue } from '@/lib/fatigue'
-import type { Exercise, FatigueState, LoggedSet, InsertedSet, UserExerciseMax } from '@/types'
+import { WeeklyVolumePanel } from '@/components/dashboard/WeeklyVolumePanel'
+import { applySetFatigue, muscleLabel } from '@/lib/fatigue'
+import type { Exercise, FatigueState, LoggedSet, InsertedSet, UserExerciseMax, WeeklyVolume } from '@/types'
 
 type DashboardClientProps = {
   initialFatigueState: FatigueState
   exercises: Exercise[]
   initialSets: LoggedSet[]
   initialUserMaxes: UserExerciseMax[]
+  weeklyVolume: WeeklyVolume
 }
 
 type LogSetApiResponse = InsertedSet & { fatigue: FatigueState }
@@ -24,6 +26,7 @@ export function DashboardClient({
   exercises,
   initialSets,
   initialUserMaxes,
+  weeklyVolume,
 }: DashboardClientProps) {
   const [fatigueState, setFatigueState] = useState(initialFatigueState)
   const [loggedSets, setLoggedSets] = useState(initialSets)
@@ -33,12 +36,21 @@ export function DashboardClient({
   const [settingMax, setSettingMax] = useState(false)
   const [maxInput, setMaxInput] = useState<number>(1)
   const [savingMax, setSavingMax] = useState(false)
+  const [volumePanelOpen, setVolumePanelOpen] = useState(false)
   const prevFatigueRef = useRef(initialFatigueState)
 
   const selectedExercise = exercises.find((e) => e.id === selectedExerciseId) ?? null
   const currentMax = selectedExerciseId
     ? (userMaxes.find((m) => m.exerciseId === selectedExerciseId)?.maxValue ?? null)
     : null
+
+  // Count today's sets for the primary muscle of the selected exercise
+  const primaryMuscle = selectedExercise?.muscles[0]?.muscle ?? null
+  const sessionSetCountForPrimary = primaryMuscle
+    ? loggedSets
+        .filter((s) => s.muscles.some((m) => m.muscle === primaryMuscle))
+        .reduce((acc, s) => acc + s.sets, 0)
+    : 0
 
   // When selecting an exercise, check if we need to prompt for max
   function handleSelectExercise(id: string) {
@@ -175,6 +187,24 @@ export function DashboardClient({
             </h2>
           </div>
           <FatigueMap fatigueState={fatigueState} />
+
+          {/* Weekly Volume collapsible panel */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <button
+              type="button"
+              onClick={() => setVolumePanelOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-full"
+            >
+              <span>Weekly Volume</span>
+              <span className="ml-auto">{volumePanelOpen ? '▴' : '▾'}</span>
+            </button>
+            {volumePanelOpen && (
+              <div className="max-h-64 overflow-y-auto pr-1">
+                <p className="text-[10px] text-muted-foreground/60 mt-1 mb-2">Sets per muscle this week</p>
+                <WeeklyVolumePanel weeklyVolume={weeklyVolume} />
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
@@ -244,6 +274,13 @@ export function DashboardClient({
             userMax={currentMax ?? undefined}
             disabled={selectedExercise !== null && settingMax}
           />
+          {primaryMuscle !== null && sessionSetCountForPrimary >= 4 && (
+            <p className="mt-2 text-xs text-muted-foreground/70">
+              {sessionSetCountForPrimary} sets for{' '}
+              <span className="font-medium text-muted-foreground">{muscleLabel(primaryMuscle)}</span>{' '}
+              today — diminishing returns above 6
+            </p>
+          )}
           {mutation.isPending && (
             <p className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
