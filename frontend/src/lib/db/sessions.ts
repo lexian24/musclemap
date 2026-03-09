@@ -8,6 +8,11 @@ import type {
   TodaySession,
 } from '@/types'
 
+export type HistoryDay = {
+  date: string // ISO date string "YYYY-MM-DD"
+  sets: LoggedSet[]
+}
+
 function startOfTodayUTC(): string {
   const d = new Date()
   d.setUTCHours(0, 0, 0, 0)
@@ -117,4 +122,58 @@ export async function getTodaySets(userId: string): Promise<LoggedSet[]> {
     reps: row.reps,
     loggedAt: row.logged_at,
   }))
+}
+
+type HistorySessionRow = {
+  id: string
+  logged_at: string
+  logged_sets: LoggedSetRow[]
+}
+
+/** Returns grouped workout history for the user, newest days first. */
+export async function getWorkoutHistory(userId: string, limit = 30): Promise<HistoryDay[]> {
+  const supabase = await createClient()
+
+  const cutoff = new Date()
+  cutoff.setUTCDate(cutoff.getUTCDate() - limit)
+  cutoff.setUTCHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('id, logged_at, logged_sets(id, session_id, exercise_id, sets, reps, logged_at, exercises(name, muscles))')
+    .eq('user_id', userId)
+    .gte('logged_at', cutoff.toISOString())
+    .order('logged_at', { ascending: false })
+
+  if (error) throw new Error(`Failed to fetch workout history: ${error.message}`)
+
+  const rows = data as unknown as HistorySessionRow[]
+
+  // Group by UTC date (YYYY-MM-DD)
+  const dayMap = new Map<string, LoggedSet[]>()
+
+  for (const session of rows) {
+    const dateKey = session.logged_at.slice(0, 10)
+    if (!dayMap.has(dateKey)) {
+      dayMap.set(dateKey, [])
+    }
+    const sets = session.logged_sets.map((row) => ({
+      id: row.id,
+      sessionId: row.session_id,
+      exerciseId: row.exercise_id,
+      exerciseName: row.exercises?.name ?? '',
+      muscles: row.exercises?.muscles ?? [],
+      sets: row.sets,
+      reps: row.reps,
+      loggedAt: row.logged_at,
+    }))
+    // Sort sets newest first within each session
+    sets.sort((a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime())
+    dayMap.get(dateKey)!.push(...sets)
+  }
+
+  // Convert to sorted array (newest day first)
+  return Array.from(dayMap.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, sets]) => ({ date, sets }))
 }

@@ -57,11 +57,11 @@ export function MuscleGroupPath({
   return (
     <path
       d={d}
-      stroke={hasSignificantFatigue ? color : '#4A5568'}
-      strokeWidth={hasSignificantFatigue ? '0.6' : '0.5'}
-      strokeOpacity={hasSignificantFatigue ? 0.6 : 0.8}
+      stroke={hasSignificantFatigue ? color : '#4B5563'}
+      strokeWidth={hasSignificantFatigue ? '0.5' : '0.4'}
+      strokeOpacity={hasSignificantFatigue ? 0.6 : 0.7}
       style={{
-        fill: hasSignificantFatigue ? color : '#2D3748',
+        fill: hasSignificantFatigue ? color : '#374151',
         fillOpacity,
         transition: 'fill 0.5s ease, fill-opacity 0.5s ease, filter 0.2s ease',
         cursor: onClick ? 'pointer' : 'default',
