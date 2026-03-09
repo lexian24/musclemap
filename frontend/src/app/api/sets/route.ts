@@ -9,6 +9,7 @@ const logSetSchema = z.object({
   exerciseId: z.string().uuid(),
   sets: z.number().int().min(1).max(20),
   reps: z.number().int().min(1).max(100),
+  userMax: z.number().int().min(1).optional(),
 })
 
 export async function POST(request: Request) {
@@ -31,11 +32,13 @@ export async function POST(request: Request) {
     )
   }
 
-  const { exerciseId, sets, reps } = parsed.data
+  const { exerciseId, sets, reps, userMax } = parsed.data
   const session = await getTodaySession(user.id)
   const workoutSet = await logSet(session.id, exerciseId, sets, reps)
 
-  // Recalculate fatigue from all of today's sets (including the one just inserted)
+  // Recalculate fatigue from all of today's sets (including the one just inserted).
+  // The newly logged set carries the caller-supplied userMax; older sets fall back
+  // to the VOLUME_NORMALISER (no userMax stored per historical set).
   const todaySets = await getTodaySets(user.id)
   const newFatigue = recalculateFatigue(
     todaySets.map((s) => ({
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
       sets: s.sets,
       reps: s.reps,
       loggedAt: new Date(s.loggedAt),
+      userMax: s.id === workoutSet.id ? userMax : undefined,
     })),
   )
   await updateFatigueCache(user.id, newFatigue)
