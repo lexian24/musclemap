@@ -16,6 +16,7 @@ type DashboardClientProps = {
 }
 
 type LogSetApiResponse = InsertedSet & { fatigue: FatigueState }
+type DeleteSetApiResponse = { fatigue: FatigueState }
 
 export function DashboardClient({
   initialFatigueState,
@@ -73,6 +74,26 @@ export function DashboardClient({
     },
   })
 
+  async function handleDeleteSet(id: string) {
+    const removedSet = loggedSets.find((s) => s.id === id)
+    // Optimistically remove the set
+    setLoggedSets((prev) => prev.filter((s) => s.id !== id))
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/sets/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete set')
+      const data = (await res.json()) as DeleteSetApiResponse
+      setFatigueState(data.fatigue)
+    } catch (err) {
+      // Restore the set on error
+      if (removedSet) {
+        setLoggedSets((prev) => [removedSet, ...prev])
+      }
+      setError(err instanceof Error ? err.message : 'Failed to delete set')
+    }
+  }
+
   function handleLogSet(sets: number, reps: number) {
     if (!selectedExercise) return
     setError(null)
@@ -85,8 +106,8 @@ export function DashboardClient({
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
       {/* Left panel — muscle fatigue map */}
-      <aside className="shrink-0 lg:w-80">
-        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
+      <aside className="shrink-0">
+        <div className="w-fit rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
           <div className="flex items-center gap-2 mb-5">
             <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
@@ -155,7 +176,7 @@ export function DashboardClient({
               </span>
             )}
           </div>
-          <LoggedSetsList sets={loggedSets} />
+          <LoggedSetsList sets={loggedSets} onDelete={(id) => void handleDeleteSet(id)} />
         </div>
       </section>
     </div>
