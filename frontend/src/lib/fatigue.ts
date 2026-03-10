@@ -4,6 +4,7 @@ import {
   INTENSITY_ZONES,
   MUSCLE_RECOVERY_MULTIPLIERS,
   SESSION_SFR_MULTIPLIERS,
+  SET_FATIGUE_SCALE,
   VOLUME_NORMALISER,
 } from '@/lib/constants'
 import type { IntensityZone } from '@/lib/constants'
@@ -64,14 +65,22 @@ export function applySetFatigue(
   const next = { ...current }
 
   if (userMax !== undefined && userMax > 0) {
-    // New path: intensity-zone + session SFR multiplier
+    // New path: intensity-zone + per-set SFR multiplier + global scale
     const effortRatio = Math.min(1, reps / userMax)
     const zone = getIntensityZone(effortRatio)
 
     for (const { muscle, intensity } of muscles) {
-      const setNumber = (sessionSetCounts?.[muscle] ?? 0) + 1
-      const sfrMultiplier = getSessionSfrMultiplier(setNumber)
-      const volume = sets * effortRatio * zone.fatigueMultiplier * sfrMultiplier
+      // Sum the SFR multiplier for each individual set so that sets 5, 6, 7+
+      // each get their own (increasing) penalty rather than the whole entry
+      // being pegged to the first set's multiplier.
+      const startSetNumber = sessionSetCounts?.[muscle] ?? 0
+      let sfrSum = 0
+      for (let s = 1; s <= sets; s++) {
+        sfrSum += getSessionSfrMultiplier(startSetNumber + s)
+      }
+      // Divide by SET_FATIGUE_SCALE so that ~15 moderate sets of a primary
+      // muscle (intensity 0.8, effortRatio 0.67) equals 1.0 fatigue.
+      const volume = (effortRatio * zone.fatigueMultiplier * sfrSum) / SET_FATIGUE_SCALE
       const delta = intensity * volume
       next[muscle] = Math.min(1, next[muscle] + delta)
     }
