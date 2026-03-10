@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { decayFatigue, emptyFatigueState } from '@/lib/fatigue'
+import { decayFatigue, emptyFatigueState, recalculateFatigue } from '@/lib/fatigue'
+import { getRecentSets } from '@/lib/db/sessions'
+import { getUserMaxes } from '@/lib/db/userMaxes'
 import { ALL_MUSCLE_GROUPS } from '@/types'
 import type { DbMuscleFatigueCache, FatigueState, MuscleGroup } from '@/types'
 
@@ -36,6 +38,33 @@ export async function getFatigueState(userId: string): Promise<FatigueState> {
   }
 
   return state
+}
+
+/**
+ * Computes the current fatigue state fresh from the past FATIGUE_LOOKBACK_HOURS of
+ * session history, applying stored userMaxes to every set. This is the authoritative
+ * source of truth and bypasses the cache entirely, so stale cached values from old
+ * formula runs can never cause inflated fatigue on page load.
+ *
+ * Used by the dashboard page on every load. The API routes (log/delete) use the same
+ * logic inline and update the cache for their own response payloads.
+ */
+export async function computeFatigueFromHistory(userId: string): Promise<FatigueState> {
+  const [recentSets, storedMaxes] = await Promise.all([
+    getRecentSets(userId),
+    getUserMaxes(userId),
+  ])
+  const maxByExercise = new Map(storedMaxes.map((m) => [m.exerciseId, m.maxValue]))
+
+  return recalculateFatigue(
+    recentSets.map((s) => ({
+      muscles: s.muscles,
+      sets: s.sets,
+      reps: s.reps,
+      loggedAt: new Date(s.loggedAt),
+      userMax: maxByExercise.get(s.exerciseId),
+    })),
+  )
 }
 
 /** Upserts the full fatigue state for a user into the cache table. */
