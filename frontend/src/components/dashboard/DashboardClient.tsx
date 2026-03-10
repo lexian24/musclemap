@@ -100,6 +100,13 @@ export function DashboardClient({
     },
     onSuccess: (data, variables) => {
       setError(null)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const apiVersion = (data as Record<string, unknown>)._v as string | undefined
+      if (!apiVersion) {
+        console.warn('[MuscleMap] API response missing _v — Vercel may be serving stale code')
+      } else {
+        console.log('[MuscleMap] API version:', apiVersion)
+      }
       // Replace optimistic fatigue with server-recalculated accurate value
       setFatigueState(data.fatigue)
       // Prepend new set to the history list
