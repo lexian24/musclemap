@@ -337,7 +337,7 @@ type BodyViewProps = {
 function BodyView({ label, muscles, fatigueState, view, onMuscleClick, onMuscleHover }: BodyViewProps) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+      <span className="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/50">
         {label}
       </span>
       <svg

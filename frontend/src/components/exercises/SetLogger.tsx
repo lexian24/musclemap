@@ -6,9 +6,9 @@ import type { Exercise } from '@/types'
 // Intensity zone boundaries (effortRatio = reps / userMax).
 // UI-only — defined inline to avoid circular dependency with constants.ts.
 const INTENSITY_ZONE_LABELS = [
-  { label: 'Very Light', minEffort: 0,    maxEffort: 0.50, color: 'text-muted-foreground bg-secondary' },
+  { label: 'Very Light', minEffort: 0,    maxEffort: 0.50, color: 'text-zinc-400 bg-zinc-500/15' },
   { label: 'Light',      minEffort: 0.50, maxEffort: 0.65, color: 'text-blue-400 bg-blue-500/15' },
-  { label: 'Moderate',   minEffort: 0.65, maxEffort: 0.75, color: 'text-green-400 bg-green-500/15' },
+  { label: 'Moderate',   minEffort: 0.65, maxEffort: 0.75, color: 'text-emerald-400 bg-emerald-500/15' },
   { label: 'Heavy',      minEffort: 0.75, maxEffort: 0.85, color: 'text-amber-400 bg-amber-500/15' },
   { label: 'Very Heavy', minEffort: 0.85, maxEffort: 0.92, color: 'text-orange-400 bg-orange-500/15' },
   { label: 'Max Effort', minEffort: 0.92, maxEffort: 1.01, color: 'text-red-400 bg-red-500/15' },
@@ -78,18 +78,18 @@ function NumericField({
   }
 
   return (
-    <div className="flex-1 space-y-1">
+    <div className="flex-1 space-y-1.5">
       <label htmlFor={id} className="block text-xs font-medium text-muted-foreground">
         {label}
       </label>
-      <div className="flex items-center rounded-md border border-border bg-secondary overflow-hidden">
+      <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
         <button
           type="button"
           onClick={() => step(-1)}
-          className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors select-none text-base leading-none"
+          className="px-3.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-colors select-none text-base leading-none cursor-pointer"
           aria-label={`Decrease ${label}`}
         >
-          −
+          -
         </button>
         <input
           id={id}
@@ -99,13 +99,13 @@ function NumericField({
           value={raw}
           onChange={handleChange}
           onBlur={handleBlur}
-          className="w-full bg-transparent text-center text-sm font-semibold text-foreground focus:outline-none py-2 min-w-0"
+          className="w-full bg-transparent text-center text-sm font-semibold text-foreground focus:outline-none py-2.5 min-w-0"
           aria-label={label}
         />
         <button
           type="button"
           onClick={() => step(1)}
-          className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors select-none text-base leading-none"
+          className="px-3.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-colors select-none text-base leading-none cursor-pointer"
           aria-label={`Increase ${label}`}
         >
           +
@@ -137,18 +137,20 @@ export function SetLogger({ exercise, userMax, disabled = false, onLogSet }: Set
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <p className="text-xs text-muted-foreground">Selected exercise</p>
-        <p className={`mt-0.5 text-sm font-semibold ${exercise ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+        <p className={`mt-1 text-sm font-semibold ${exercise ? 'text-foreground' : 'text-muted-foreground/40'}`}>
           {exercise ? exercise.name : 'Select an exercise above'}
         </p>
         {userMax !== undefined && userMax > 0 && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Your max: <span className="font-medium text-primary">{userMax} {repLabel.toLowerCase()}</span>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              Your max: <span className="font-semibold text-red-400">{userMax} {repLabel.toLowerCase()}</span>
+            </span>
             {reps > 0 && (
-              <span className="ml-2 text-muted-foreground/60">
+              <span className="text-[11px] text-muted-foreground/50">
                 ({Math.min(100, Math.round((reps / userMax) * 100))}% effort)
               </span>
             )}
-          </p>
+          </div>
         )}
       </div>
 
@@ -176,7 +178,7 @@ export function SetLogger({ exercise, userMax, disabled = false, onLogSet }: Set
         const zone = getIntensityZone(Math.min(effortRatio, 1))
         return (
           <p className="text-xs">
-            <span className={`inline-block px-2 py-0.5 rounded-full font-medium leading-none ${zone.color}`}>
+            <span className={`inline-block px-2.5 py-1 rounded-lg font-semibold leading-none ${zone.color}`}>
               {zone.label}
             </span>
           </p>
@@ -184,15 +186,18 @@ export function SetLogger({ exercise, userMax, disabled = false, onLogSet }: Set
       })()}
 
       {success && (
-        <p className="text-sm text-green-400 flex items-center gap-1.5">
-          <span>✓</span> Set logged!
-        </p>
+        <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <p className="text-sm font-medium text-emerald-400">Set logged!</p>
+        </div>
       )}
 
       <button
         type="submit"
         disabled={!exercise || disabled}
-        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
+        className="w-full rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-4 py-3 text-sm font-bold text-white transition-all hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:shadow-none cursor-pointer"
       >
         {disabled ? 'Set your max first' : 'Log Set'}
       </button>

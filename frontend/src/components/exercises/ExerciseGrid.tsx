@@ -29,19 +29,19 @@ export function ExerciseGrid({ exercises, selectedId, onSelect }: ExerciseGridPr
     : exercises.filter((e) => e.category === activeCategory)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {hasCategoryData && (
-        <div className="flex gap-1 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap">
           {CATEGORIES.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setActiveCategory(key)}
               className={[
-                'rounded-md px-3 py-1 text-xs font-semibold transition-colors',
+                'rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer',
                 activeCategory === key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-accent',
+                  ? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/30'
+                  : 'bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground',
               ].join(' ')}
             >
               {label}
@@ -59,7 +59,7 @@ export function ExerciseGrid({ exercises, selectedId, onSelect }: ExerciseGridPr
           />
         ))}
         {filtered.length === 0 && (
-          <p className="col-span-full text-sm text-muted-foreground py-4 text-center">
+          <p className="col-span-full text-sm text-muted-foreground py-6 text-center">
             No exercises in this category yet.
           </p>
         )}

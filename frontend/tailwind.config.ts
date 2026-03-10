@@ -11,6 +11,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['var(--font-barlow-condensed)', 'Barlow Condensed', 'system-ui', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

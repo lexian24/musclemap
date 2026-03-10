@@ -41,16 +41,22 @@ export default async function HistoryPage() {
   const history = await getWorkoutHistory(user.id)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Workout History</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">Workout History</h1>
         <p className="text-sm text-muted-foreground mt-1">Your last 30 days of training</p>
       </div>
 
       {history.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-10 text-center shadow-lg shadow-black/20">
-          <p className="text-muted-foreground text-sm">No workout history yet.</p>
-          <p className="text-muted-foreground/60 text-xs mt-1">
+        <div className="glass-card p-12 text-center">
+          <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/40" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <p className="text-muted-foreground text-sm font-medium">No workout history yet</p>
+          <p className="text-muted-foreground/50 text-xs mt-1">
             Log your first set on the dashboard to get started.
           </p>
         </div>
@@ -59,34 +65,34 @@ export default async function HistoryPage() {
           {history.map(({ date, sets }) => (
             <div
               key={date}
-              className="rounded-xl border border-border bg-card shadow-lg shadow-black/20 overflow-hidden"
+              className="glass-card overflow-hidden"
             >
               {/* Day header */}
-              <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                <h2 className="text-sm font-semibold text-foreground">
+              <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/[0.04]">
+                <h2 className="font-display text-sm font-bold text-foreground tracking-wide">
                   {formatDayLabel(date)}
                 </h2>
-                <span className="ml-auto text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                <span className="ml-auto text-xs font-semibold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full">
                   {sets.length} {sets.length === 1 ? 'set' : 'sets'}
                 </span>
               </div>
 
               {/* Sets list */}
-              <ul className="divide-y divide-border/50">
+              <ul className="divide-y divide-white/[0.03]">
                 {sets.map((set) => (
                   <li
                     key={set.id}
-                    className="flex items-center justify-between px-5 py-2.5"
+                    className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors"
                   >
-                    <div>
+                    <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-foreground">
                         {set.exerciseName}
                       </span>
-                      <span className="ml-2 text-sm text-primary">
-                        {set.sets}×{set.reps}
+                      <span className="text-sm font-semibold text-red-400">
+                        {set.sets}&times;{set.reps}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground/50 tabular-nums">
                       {formatTime(set.loggedAt)}
                     </span>
                   </li>

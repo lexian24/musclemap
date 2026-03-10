@@ -21,6 +21,25 @@ type DashboardClientProps = {
 type LogSetApiResponse = InsertedSet & { fatigue: FatigueState }
 type DeleteSetApiResponse = { fatigue: FatigueState }
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 export function DashboardClient({
   initialFatigueState,
   exercises,
@@ -180,47 +199,51 @@ export function DashboardClient({
   const unit = selectedExercise?.unit ?? 'reps'
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
       {/* Left panel — muscle fatigue map */}
       <aside className="shrink-0">
-        <div className="w-fit rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+        <div className="glass-card p-5 w-fit">
+          <div className="flex items-center gap-2.5 mb-5">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse shadow-sm shadow-red-500/50" />
+            <h2 className="section-title">
               Muscle Recovery
             </h2>
           </div>
           <FatigueMap fatigueState={fatigueState} />
 
           {/* Weekly Volume collapsible panel */}
-          <div className="mt-4 pt-4 border-t border-border">
+          <div className="mt-5 pt-5 border-t border-white/[0.06]">
             <button
               type="button"
               onClick={() => setVolumePanelOpen((prev) => !prev)}
-              className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-full"
+              className="flex items-center gap-2 section-title hover:text-foreground transition-colors w-full cursor-pointer"
             >
               <span>Weekly Volume</span>
-              <span className="ml-auto">{volumePanelOpen ? '▴' : '▾'}</span>
+              <span className="ml-auto">
+                <ChevronIcon open={volumePanelOpen} />
+              </span>
             </button>
-            {volumePanelOpen && (
-              <div className="max-h-64 overflow-y-auto pr-1">
-                <p className="text-[10px] text-muted-foreground/60 mt-1 mb-2">Sets per muscle this week</p>
-                <WeeklyVolumePanel weeklyVolume={weeklyVolume} />
+            <div
+              className={`grid transition-all duration-300 ease-in-out ${volumePanelOpen ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'}`}
+            >
+              <div className="overflow-hidden">
+                <div className="max-h-64 overflow-y-auto pr-1">
+                  <p className="text-[10px] text-muted-foreground/50 mb-2">Sets per muscle this week</p>
+                  <WeeklyVolumePanel weeklyVolume={weeklyVolume} />
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Right panel — exercise logger + history */}
-      <section className="min-w-0 flex-1 space-y-6">
+      <section className="min-w-0 flex-1 space-y-5">
         {/* Choose Exercise */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
-          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-              Choose Exercise
-            </h2>
-          </div>
+        <div className="glass-card p-5">
+          <h2 className="section-title mb-4">
+            Choose Exercise
+          </h2>
           <ExerciseGrid
             exercises={exercises}
             selectedId={selectedExerciseId}
@@ -230,19 +253,17 @@ export function DashboardClient({
 
         {/* Set Your Max prompt (shown when exercise selected but no max recorded) */}
         {selectedExercise && settingMax && (
-          <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
-            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
-              <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                Set Your Max
-              </h2>
-            </div>
+          <div className="glass-card p-5">
+            <h2 className="section-title mb-4">
+              Set Your Max
+            </h2>
             <p className="text-sm text-muted-foreground mb-4">
               What&apos;s the most {unit} you can do in 1 set of{' '}
               <span className="font-semibold text-foreground">{selectedExercise.name}</span>?
             </p>
             <div className="flex items-end gap-3">
-              <div className="flex-1 space-y-1">
-                <label htmlFor="max-input" className="block text-xs text-muted-foreground">
+              <div className="flex-1 space-y-1.5">
+                <label htmlFor="max-input" className="block text-xs font-medium text-muted-foreground">
                   Max {unit}
                 </label>
                 <input
@@ -251,27 +272,25 @@ export function DashboardClient({
                   min={1}
                   value={maxInput}
                   onChange={(e) => setMaxInput(Math.max(1, Number(e.target.value)))}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors"
                 />
               </div>
               <button
                 onClick={() => void handleSaveMax()}
                 disabled={savingMax || maxInput < 1}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
+                className="rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30"
               >
-                {savingMax ? 'Saving…' : 'Save Max'}
+                {savingMax ? 'Saving...' : 'Save Max'}
               </button>
             </div>
           </div>
         )}
 
         {/* Log a Set */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
-          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-              Log a Set
-            </h2>
-          </div>
+        <div className="glass-card p-5">
+          <h2 className="section-title mb-4">
+            Log a Set
+          </h2>
           <SetLogger
             exercise={selectedExercise}
             onLogSet={handleLogSet}
@@ -279,27 +298,34 @@ export function DashboardClient({
             disabled={selectedExercise !== null && settingMax}
           />
           {primaryMuscle !== null && sessionSetCountForPrimary >= 4 && (
-            <p className="mt-2 text-xs text-muted-foreground/70">
-              {sessionSetCountForPrimary} sets for{' '}
-              <span className="font-medium text-muted-foreground">{muscleLabel(primaryMuscle)}</span>{' '}
-              today — diminishing returns above 6
-            </p>
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 shrink-0" aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-xs text-amber-300/80">
+                {sessionSetCountForPrimary} sets for{' '}
+                <span className="font-medium text-amber-300">{muscleLabel(primaryMuscle)}</span>{' '}
+                today — diminishing returns above 6
+              </p>
+            </div>
           )}
           {mutation.isPending && (
-            <p className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Saving…
-            </p>
+            <div className="mt-3 flex items-center gap-2.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+              <p className="text-sm text-muted-foreground">Saving...</p>
+            </div>
           )}
           {error && (
-            <div className="mt-3 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
-              <p className="text-sm text-destructive flex-1">{error}</p>
+            <div className="mt-3 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5">
+              <p className="text-sm text-red-400 flex-1">{error}</p>
               <button
                 onClick={() => {
                   setError(null)
                   mutation.reset()
                 }}
-                className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors flex-shrink-0"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-pointer"
               >
                 Dismiss
               </button>
@@ -308,13 +334,13 @@ export function DashboardClient({
         </div>
 
         {/* Today's Sets */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
-          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+        <div className="glass-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="section-title">
               Today&apos;s Sets
             </h2>
             {loggedSets.length > 0 && (
-              <span className="ml-auto text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+              <span className="ml-auto text-xs font-semibold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full">
                 {loggedSets.length}
               </span>
             )}

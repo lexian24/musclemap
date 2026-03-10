@@ -15,20 +15,20 @@ export function ExerciseCard({ exercise, selected, onSelect }: ExerciseCardProps
       type="button"
       onClick={() => onSelect(exercise.id)}
       className={[
-        'w-full text-left rounded-lg border p-3 transition-colors',
-        'bg-[#1a1a1a] hover:bg-[#222]',
+        'w-full text-left rounded-xl border p-3 transition-all duration-150 cursor-pointer',
+        'bg-white/[0.02] hover:bg-white/[0.05]',
         selected
-          ? 'border-[#FF2020] ring-1 ring-[#FF2020]'
-          : 'border-[#333] hover:border-[#555]',
+          ? 'border-red-500/50 ring-1 ring-red-500/30 shadow-md shadow-red-500/10'
+          : 'border-white/[0.06] hover:border-white/[0.12]',
       ].join(' ')}
     >
-      <p className="text-sm font-medium text-white truncate">{exercise.name}</p>
-      <div className="mt-2 flex flex-wrap gap-1">
+      <p className="text-sm font-medium text-foreground truncate">{exercise.name}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {exercise.muscles.map(({ muscle, intensity }) => (
           <span
             key={muscle}
             title={`${muscle.replace(/_/g, ' ')} (${Math.round(intensity * 100)}%)`}
-            className="inline-block h-2.5 w-2.5 rounded-full"
+            className="inline-block h-2 w-2 rounded-full ring-1 ring-white/10"
             style={{ backgroundColor: fatigueToColor(intensity) }}
           />
         ))}
