@@ -35,6 +35,8 @@ export async function POST(request: Request) {
 
   const { exerciseId, sets, reps, userMax } = parsed.data
 
+  console.log('[sets/POST] parsed input:', { exerciseId, sets, reps, userMax })
+
   const session = await getTodaySession(user.id)
   const workoutSet = await logSet(session.id, exerciseId, sets, reps)
 
@@ -46,6 +48,10 @@ export async function POST(request: Request) {
     getUserMaxes(user.id),
   ])
   const maxByExercise = new Map(storedMaxes.map((m) => [m.exerciseId, m.maxValue]))
+
+  console.log('[sets/POST] storedMaxes:', storedMaxes)
+  console.log('[sets/POST] workoutSet.id:', workoutSet.id)
+  console.log('[sets/POST] recentSets count:', recentSets.length)
 
   const payload = recentSets.map((s) => ({
     muscles: s.muscles,
@@ -59,8 +65,21 @@ export async function POST(request: Request) {
       ? (userMax ?? maxByExercise.get(s.exerciseId))
       : maxByExercise.get(s.exerciseId),
   }))
+
+  console.log('[sets/POST] payload userMaxes:', payload.map((p) => ({
+    sets: p.sets,
+    reps: p.reps,
+    userMax: p.userMax,
+    muscleCount: p.muscles.length,
+  })))
+
   const newFatigue = recalculateFatigue(payload)
+
+  // Log muscles with non-zero fatigue for debugging
+  const nonZero = Object.entries(newFatigue).filter(([, v]) => v > 0.001)
+  console.log('[sets/POST] fatigue result:', nonZero)
+
   await updateFatigueCache(user.id, newFatigue)
 
-  return NextResponse.json({ ...workoutSet, fatigue: newFatigue }, { status: 201 })
+  return NextResponse.json({ ...workoutSet, fatigue: newFatigue, _v: 'v1.0-pr12' }, { status: 201 })
 }

@@ -247,4 +247,107 @@ describe('applySetFatigue — intensity zone path', () => {
     const next = applySetFatigue(state, [{ muscle: 'chest', intensity: 0.8 }], 3, 10)
     expect(next.chest).toBeCloseTo(0.8)
   })
+
+  it('calibration: 15 moderate-effort sets of a primary muscle should reach ~100% fatigue', () => {
+    // Design target: effortRatio ≈ 0.67 (40/60 reps), Moderate zone (1.0×),
+    // chest intensity 0.8 (push-ups primary), no prior sets today.
+    // Expected: chest ≈ 1.0 (fully destroyed) after a full 15-set chest session.
+    const state = emptyFatigueState()
+    const userMax = 60
+    const reps = 40 // effortRatio = 0.667 → Moderate zone
+    const next = applySetFatigue(
+      state,
+      [{ muscle: 'chest' as const, intensity: 0.8 }],
+      15,
+      reps,
+      userMax,
+      {},
+    )
+    expect(next.chest).toBeCloseTo(1.0, 1)
+  })
+
+  it('calibration: 3 moderate-effort sets should produce ~20% chest fatigue, not max', () => {
+    const state = emptyFatigueState()
+    const next = applySetFatigue(
+      state,
+      [{ muscle: 'chest' as const, intensity: 0.8 }],
+      3,
+      40,
+      60, // userMax
+      {},
+    )
+    expect(next.chest).toBeGreaterThan(0.1)
+    expect(next.chest).toBeLessThan(0.4)
+  })
+
+  it('calf raises: max=30, 3×15 should produce ~14% calves fatigue, NOT 100%', () => {
+    const state = emptyFatigueState()
+    const next = applySetFatigue(
+      state,
+      [{ muscle: 'calves' as const, intensity: 0.9 }],
+      3,
+      15,
+      30, // userMax
+      {},
+    )
+    // effortRatio = 15/30 = 0.5 → Light zone (0.85×)
+    // sfrSum = 1.0 + 1.0 + 1.0 = 3.0
+    // volume = (0.5 × 0.85 × 3.0) / 8 = 0.159
+    // delta = 0.9 × 0.159 = 0.143
+    expect(next.calves).toBeCloseTo(0.143, 2)
+    expect(next.calves).toBeLessThan(0.2)
+  })
+
+  it('without userMax, old formula produces 100% for 3×15 calves (the bug)', () => {
+    const state = emptyFatigueState()
+    const next = applySetFatigue(
+      state,
+      [{ muscle: 'calves' as const, intensity: 0.9 }],
+      3,
+      15,
+      undefined, // NO userMax → old VOLUME_NORMALISER path
+      {},
+    )
+    // volume = (3×15)/30 = 1.5, delta = 0.9 × 1.5 = 1.35, capped at 1.0
+    expect(next.calves).toBe(1.0)
+  })
+})
+
+describe('recalculateFatigue — end-to-end', () => {
+  it('calf raises scenario: max=30, 3×15 via recalculateFatigue returns ~14%', () => {
+    const now = new Date('2026-03-10T12:00:00Z')
+    const setTime = new Date('2026-03-10T11:59:59Z') // 1 second ago
+    const result = recalculateFatigue(
+      [
+        {
+          muscles: [{ muscle: 'calves' as const, intensity: 0.9 }],
+          sets: 3,
+          reps: 15,
+          loggedAt: setTime,
+          userMax: 30,
+        },
+      ],
+      now,
+    )
+    expect(result.calves).toBeCloseTo(0.143, 2)
+    expect(result.calves).toBeLessThan(0.2)
+  })
+
+  it('calf raises scenario WITHOUT userMax via recalculateFatigue hits 100%', () => {
+    const now = new Date('2026-03-10T12:00:00Z')
+    const setTime = new Date('2026-03-10T11:59:59Z')
+    const result = recalculateFatigue(
+      [
+        {
+          muscles: [{ muscle: 'calves' as const, intensity: 0.9 }],
+          sets: 3,
+          reps: 15,
+          loggedAt: setTime,
+          userMax: undefined, // Missing userMax triggers the old path
+        },
+      ],
+      now,
+    )
+    expect(result.calves).toBeCloseTo(1.0, 1)
+  })
 })
