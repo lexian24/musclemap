@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getTodaySets } from '@/lib/db/sessions'
+import { getRecentSets } from '@/lib/db/sessions'
 import { updateFatigueCache } from '@/lib/db/fatigue'
 import { recalculateFatigue } from '@/lib/fatigue'
 
@@ -45,10 +45,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete set' }, { status: 500 })
   }
 
-  // Recalculate fatigue from remaining sets
-  const todaySets = await getTodaySets(user.id)
+  // Recalculate fatigue from all sets in the past FATIGUE_LOOKBACK_HOURS so that
+  // previous-day fatigue carries forward correctly after the deletion.
+  const recentSets = await getRecentSets(user.id)
   const newFatigue = recalculateFatigue(
-    todaySets.map((s) => ({
+    recentSets.map((s) => ({
       muscles: s.muscles,
       sets: s.sets,
       reps: s.reps,

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { FATIGUE_LOOKBACK_HOURS } from '@/lib/constants'
 import type {
   DbWorkoutSession,
   DbLoggedSet,
@@ -124,6 +125,47 @@ export async function getTodaySets(userId: string): Promise<LoggedSet[]> {
     reps: row.reps,
     loggedAt: row.logged_at,
   }))
+}
+
+/**
+ * Returns all logged sets from the past FATIGUE_LOOKBACK_HOURS hours, across all
+ * sessions, sorted chronologically. Used by fatigue recalculation on every set
+ * log/delete so that previous-day fatigue is correctly carried forward rather
+ * than being overwritten with zero.
+ */
+export async function getRecentSets(userId: string): Promise<LoggedSet[]> {
+  const supabase = await createClient()
+  const cutoff = new Date(Date.now() - FATIGUE_LOOKBACK_HOURS * 3_600_000)
+
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('id, logged_at, logged_sets(id, session_id, exercise_id, sets, reps, logged_at, exercises(name, muscles))')
+    .eq('user_id', userId)
+    .gte('logged_at', cutoff.toISOString())
+    .order('logged_at', { ascending: true })
+
+  if (error) throw new Error(`Failed to fetch recent sets: ${error.message}`)
+
+  const rows = data as unknown as HistorySessionRow[]
+  const sets: LoggedSet[] = []
+
+  for (const session of rows) {
+    for (const row of session.logged_sets) {
+      sets.push({
+        id: row.id,
+        sessionId: row.session_id,
+        exerciseId: row.exercise_id,
+        exerciseName: row.exercises?.name ?? '',
+        muscles: row.exercises?.muscles ?? [],
+        sets: row.sets,
+        reps: row.reps,
+        loggedAt: row.logged_at,
+      })
+    }
+  }
+
+  sets.sort((a, b) => new Date(a.loggedAt).getTime() - new Date(b.loggedAt).getTime())
+  return sets
 }
 
 type WeeklySessionRow = {

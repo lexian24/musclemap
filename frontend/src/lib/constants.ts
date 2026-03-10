@@ -8,6 +8,17 @@ export const FATIGUE_DECAY_PER_HOUR = 0.05
 // Volume normalisation: a 3×10 set equals 1.0 volume unit.
 export const VOLUME_NORMALISER = 30 // sets * reps / VOLUME_NORMALISER
 
+// Fatigue scale for the intensity-zone path (userMax present).
+// Calibrated so that 15 moderate-effort sets of a primary muscle (intensity 0.8,
+// effortRatio ≈ 0.67) accumulates exactly 1.0 fatigue (fully destroyed).
+// Adjust this constant to make the whole model more or less aggressive.
+export const SET_FATIGUE_SCALE = 8
+
+// How far back to fetch sets when recalculating fatigue from history.
+// Longest recovery time is 80h (lower_back/hamstrings); 96h adds a safe margin
+// so no lingering fatigue is silently dropped.
+export const FATIGUE_LOOKBACK_HOURS = 96
+
 // Fatigue color thresholds (fatigue value → hex color)
 export const FATIGUE_COLOR_STOPS: Array<{ at: number; color: string }> = [
   { at: 0.0, color: '#FFFFFF' },
