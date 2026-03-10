@@ -16,34 +16,35 @@ export function FatigueMap({ fatigueState, onMuscleClick }: FatigueMapProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="relative inline-flex justify-center">
-        <BodyDiagram
-          fatigueState={fatigueState}
-          onMuscleClick={onMuscleClick}
-          onMuscleHover={setHoveredMuscle}
-        />
-        {hoveredMuscle !== null && (
+      <BodyDiagram
+        fatigueState={fatigueState}
+        onMuscleClick={onMuscleClick}
+        onMuscleHover={setHoveredMuscle}
+      />
+
+      {/* Tooltip — centered below diagram so it never overflows on mobile or gets clipped by adjacent panels */}
+      <div className="h-10 flex items-center justify-center">
+        {hoveredMuscle !== null ? (
           <div
-            className="pointer-events-none absolute -right-2 top-4 translate-x-full z-10"
             role="tooltip"
+            className="inline-flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-card/95 backdrop-blur-xl px-3.5 py-2.5 shadow-2xl shadow-black/50"
           >
-            <div className="rounded-xl border border-white/[0.08] bg-card/95 backdrop-blur-xl px-3.5 py-3 shadow-2xl shadow-black/50 min-w-[130px]">
-              <p className="text-xs font-semibold text-foreground mb-2">
-                {muscleLabel(hoveredMuscle)}
-              </p>
-              <div className="flex items-center gap-2.5">
-                <span
-                  className="h-3 w-3 flex-shrink-0 rounded-full ring-1 ring-white/10"
-                  style={{ backgroundColor: fatigueToColor(fatigueState[hoveredMuscle]) }}
-                />
-                <p className="text-xs text-muted-foreground font-medium">
-                  {Math.round(fatigueState[hoveredMuscle] * 100)}% fatigued
-                </p>
-              </div>
-            </div>
+            <span
+              className="h-3 w-3 flex-shrink-0 rounded-full ring-1 ring-white/10"
+              style={{ backgroundColor: fatigueToColor(fatigueState[hoveredMuscle]) }}
+            />
+            <p className="text-xs font-semibold text-foreground">
+              {muscleLabel(hoveredMuscle)}
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              {Math.round(fatigueState[hoveredMuscle] * 100)}%
+            </p>
           </div>
+        ) : (
+          <p className="text-[10px] text-muted-foreground/40">Hover a muscle to see fatigue</p>
         )}
       </div>
+
       <FatigueLegend />
     </div>
   )
