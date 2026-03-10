@@ -27,7 +27,7 @@ Within `frontend/src/`:
 - `components/exercises/` — `ExerciseGrid.tsx`, `ExerciseCard.tsx`, `SetLogger.tsx`, `LoggedSetsList.tsx`
 - `components/feedback/` — `FeedbackForm.tsx`
 - `lib/constants.ts` — ALL numeric constants: decay rates, intensity zones, color stops, weekly volume targets, `SET_FATIGUE_SCALE`, `FATIGUE_LOOKBACK_HOURS`
-- `lib/fatigue.ts` — fatigue algorithm (pure functions, fully unit-tested, 30 tests)
+- `lib/fatigue.ts` — fatigue algorithm (pure functions, fully unit-tested, 36 tests)
 - `lib/db/` — Supabase query functions: `exercises.ts`, `sessions.ts` (`getTodaySets`, `getRecentSets`), `fatigue.ts` (`getFatigueState` with decay-on-read), `userMaxes.ts`
 - `lib/supabase/client.ts` — browser Supabase client (Client Components + realtime)
 - `lib/supabase/server.ts` — server Supabase client (RSC + Server Actions)
@@ -38,7 +38,7 @@ cd frontend && npm run dev          # start dev server
 cd frontend && npm run build        # production build
 cd frontend && npm run typecheck    # tsc --noEmit
 cd frontend && npm run lint         # eslint
-cd frontend && npm test             # jest (30 tests)
+cd frontend && npm test             # jest (36 tests)
 cd frontend && npm run test:watch   # jest --watch
 ```
 
@@ -121,9 +121,10 @@ Tracks session set counts per muscle per UTC day for SFR multipliers.
 Fed from `getRecentSets` (past `FATIGUE_LOOKBACK_HOURS = 96h`) on every log/delete, so
 previous-day fatigue carries forward correctly across multi-day sessions.
 
-### getFatigueState (page load)
-Reads `muscle_fatigue_cache` then applies `decayFatigue` from `last_updated` to now before
-returning. Users see real-time recovery on every page load without needing to log a new set.
+### computeFatigueFromHistory (page load)
+Recomputes fatigue fresh from `getRecentSets` + `getUserMaxes` on every page load,
+bypassing the cache entirely. This prevents stale cached values from old formula runs.
+`getFatigueState` (cache + decay) exists as a lighter alternative but is not used on the dashboard.
 
 ## Fatigue Color Scale
 - 0.0 → `#FFFFFF` (white — fully recovered)
@@ -152,7 +153,7 @@ Color zones: gray (<MEV) → green (MEV–MAV) → amber (MAV–MRV) → red (>M
 ## Testing Conventions
 - Pure functions (`fatigue.ts`, `constants.ts`) get unit tests
 - Test files live next to source: `fatigue.test.ts` alongside `fatigue.ts`
-- Current test count: 32 tests in `src/lib/fatigue.test.ts`
+- Current test count: 36 tests in `src/lib/fatigue.test.ts`
 
 ## Git Workflow
 - Branch naming: `feature/*`, `fix/*`, `chore/*`, `refactor/*`
@@ -168,6 +169,8 @@ Color zones: gray (<MEV) → green (MEV–MAV) → amber (MAV–MRV) → red (>M
 - Never commit `.env.local` or any file containing real secrets
 - Never modify `components/ui/` (shadcn) directly
 - Never disable RLS on any Supabase table
+- Always verify `fatigue.ts` changes are committed before merging — local-only edits won't deploy to Vercel
+- Always run `git diff` before creating a PR to catch uncommitted changes in critical files
 
 ## v1.0 Feature Set
 - Auth (email + Google OAuth)
