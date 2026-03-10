@@ -1,12 +1,28 @@
+import { LightRays } from '@/components/backgrounds/LightRays'
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-dvh flex bg-background">
-      {/* Left brand panel — hidden on small screens */}
-      <div className="hidden lg:flex flex-col justify-between w-[440px] bg-card/50 border-r border-white/[0.04] p-10 flex-shrink-0 relative overflow-hidden">
-        {/* Subtle gradient orb */}
-        <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-red-500/[0.06] blur-[100px]" />
-        <div className="absolute -bottom-32 -right-32 w-64 h-64 rounded-full bg-red-500/[0.04] blur-[80px]" />
+    <main className="min-h-dvh flex bg-background relative">
+      {/* Full-page light rays background */}
+      <div className="absolute inset-0 z-0">
+        <LightRays
+          raysOrigin="top-left"
+          raysColor="#DC2626"
+          raysSpeed={0.4}
+          lightSpread={1.2}
+          rayLength={2.5}
+          pulsating
+          fadeDistance={1.2}
+          saturation={0.6}
+          followMouse
+          mouseInfluence={0.05}
+          noiseAmount={0.02}
+          distortion={0.1}
+        />
+      </div>
 
+      {/* Left brand panel — hidden on small screens */}
+      <div className="hidden lg:flex flex-col justify-between w-[440px] bg-card/50 border-r border-white/[0.04] p-10 flex-shrink-0 relative z-10 overflow-hidden">
         <div className="flex items-center gap-2.5 relative">
           <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-red-700 text-white font-display font-bold text-sm select-none shadow-lg shadow-red-500/20">
             M
@@ -57,7 +73,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Right form panel */}
-      <div className="flex flex-1 items-center justify-center p-6">
+      <div className="flex flex-1 items-center justify-center p-6 relative z-10">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">

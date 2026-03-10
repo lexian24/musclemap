@@ -64,7 +64,7 @@ export function MuscleGroupPath({
       d={d}
       clipPath={clipPathId ? `url(#${clipPathId})` : undefined}
       stroke={hasSignificantFatigue ? color : '#6B7280'}
-      strokeWidth="0.5"
+      strokeWidth="1"
       strokeOpacity={hasSignificantFatigue ? 0.5 : 0.6}
       style={{
         fill: hasSignificantFatigue ? color : restingFill,
