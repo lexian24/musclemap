@@ -26,9 +26,9 @@ Within `frontend/src/`:
 - `components/dashboard/` — `DashboardClient.tsx`, `WeeklyVolumePanel.tsx`
 - `components/exercises/` — `ExerciseGrid.tsx`, `ExerciseCard.tsx`, `SetLogger.tsx`, `LoggedSetsList.tsx`
 - `components/feedback/` — `FeedbackForm.tsx`
-- `lib/constants.ts` — ALL numeric constants: decay rates, intensity zones, color stops, weekly volume targets
+- `lib/constants.ts` — ALL numeric constants: decay rates, intensity zones, color stops, weekly volume targets, `SET_FATIGUE_SCALE`, `FATIGUE_LOOKBACK_HOURS`
 - `lib/fatigue.ts` — fatigue algorithm (pure functions, fully unit-tested, 30 tests)
-- `lib/db/` — Supabase query functions: `exercises.ts`, `sessions.ts`, `fatigue.ts`, `userMaxes.ts`
+- `lib/db/` — Supabase query functions: `exercises.ts`, `sessions.ts` (`getTodaySets`, `getRecentSets`), `fatigue.ts` (`getFatigueState` with decay-on-read), `userMaxes.ts`
 - `lib/supabase/client.ts` — browser Supabase client (Client Components + realtime)
 - `lib/supabase/server.ts` — server Supabase client (RSC + Server Actions)
 
@@ -83,12 +83,13 @@ type WeeklyVolume = Partial<Record<MuscleGroup, number>>
 ### Volume calculation
 When `userMax` is provided:
 ```
-effortRatio = min(1, reps / userMax)          // 0–1 proxy for % 1RM
-zone = getIntensityZone(effortRatio)           // one of 6 zones
-sfrMultiplier = getSessionSfrMultiplier(n)     // n = set number for this muscle today
-volume = sets × effortRatio × zone.fatigueMultiplier × sfrMultiplier
+effortRatio = min(1, reps / userMax)                    // 0–1 proxy for % 1RM
+zone = getIntensityZone(effortRatio)                    // one of 6 zones
+sfrSum = Σ getSessionSfrMultiplier(startSet + i)        // summed per individual set
+volume = (effortRatio × zone.fatigueMultiplier × sfrSum) / SET_FATIGUE_SCALE
 delta = muscle_intensity × volume
 ```
+Calibration: `SET_FATIGUE_SCALE = 8` → 15 moderate-effort sets of a primary muscle (intensity 0.8, effortRatio 0.67) = 1.0 fatigue. SFR is applied per individual set (not per entry) so sets 5, 6, 7+ each get their own increasing penalty.
 
 Without `userMax` (backward-compat fallback):
 ```
@@ -117,6 +118,12 @@ chest/lats/upper_back 0.33 (60h), biceps/triceps 0.42 (48h), abs/obliques/forear
 ### recalculateFatigue
 Forward-simulation: processes sets oldest-first, decays from set-to-set (not set-to-now).
 Tracks session set counts per muscle per UTC day for SFR multipliers.
+Fed from `getRecentSets` (past `FATIGUE_LOOKBACK_HOURS = 96h`) on every log/delete, so
+previous-day fatigue carries forward correctly across multi-day sessions.
+
+### getFatigueState (page load)
+Reads `muscle_fatigue_cache` then applies `decayFatigue` from `last_updated` to now before
+returning. Users see real-time recovery on every page load without needing to log a new set.
 
 ## Fatigue Color Scale
 - 0.0 → `#FFFFFF` (white — fully recovered)
@@ -145,7 +152,7 @@ Color zones: gray (<MEV) → green (MEV–MAV) → amber (MAV–MRV) → red (>M
 ## Testing Conventions
 - Pure functions (`fatigue.ts`, `constants.ts`) get unit tests
 - Test files live next to source: `fatigue.test.ts` alongside `fatigue.ts`
-- Current test count: 30 tests in `src/lib/fatigue.test.ts`
+- Current test count: 32 tests in `src/lib/fatigue.test.ts`
 
 ## Git Workflow
 - Branch naming: `feature/*`, `fix/*`, `chore/*`, `refactor/*`
