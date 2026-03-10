@@ -9,7 +9,7 @@ import { recalculateFatigue } from '@/lib/fatigue'
 const logSetSchema = z.object({
   exerciseId: z.string().uuid(),
   sets: z.number().int().min(1).max(20),
-  reps: z.number().int().min(1).max(100),
+  reps: z.number().int().min(1).max(200),
   userMax: z.number().int().min(1).optional(),
 })
 
