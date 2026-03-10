@@ -168,8 +168,12 @@ export function DashboardClient({
       })
     }
 
-    // Immediate optimistic update so the map reacts before the network call returns
-    setFatigueState(applySetFatigue(fatigueState, selectedExercise.muscles, sets, reps, userMax))
+    // Only do the optimistic update when userMax is known — without it,
+    // applySetFatigue falls back to the VOLUME_NORMALISER path which can produce
+    // wildly wrong values (e.g. 100% from 3 light sets).
+    if (userMax !== undefined) {
+      setFatigueState(applySetFatigue(fatigueState, selectedExercise.muscles, sets, reps, userMax))
+    }
     mutation.mutate({ exerciseId: selectedExercise.id, sets, reps, userMax })
   }
 

@@ -34,6 +34,7 @@ export async function POST(request: Request) {
   }
 
   const { exerciseId, sets, reps, userMax } = parsed.data
+
   const session = await getTodaySession(user.id)
   const workoutSet = await logSet(session.id, exerciseId, sets, reps)
 
@@ -46,17 +47,19 @@ export async function POST(request: Request) {
   ])
   const maxByExercise = new Map(storedMaxes.map((m) => [m.exerciseId, m.maxValue]))
 
-  const newFatigue = recalculateFatigue(
-    recentSets.map((s) => ({
-      muscles: s.muscles,
-      sets: s.sets,
-      reps: s.reps,
-      loggedAt: new Date(s.loggedAt),
-      // Prefer caller-supplied userMax for the new set (it may be a new PR that
-      // hasn't been persisted yet). Fall back to the stored max for all other sets.
-      userMax: s.id === workoutSet.id ? userMax : maxByExercise.get(s.exerciseId),
-    })),
-  )
+  const payload = recentSets.map((s) => ({
+    muscles: s.muscles,
+    sets: s.sets,
+    reps: s.reps,
+    loggedAt: new Date(s.loggedAt),
+    // For all sets: prefer the caller-supplied userMax (handles new PRs not yet persisted),
+    // but ALWAYS fall back to the stored max. This prevents the VOLUME_NORMALISER fallback
+    // from firing just because the client omitted userMax.
+    userMax: s.id === workoutSet.id
+      ? (userMax ?? maxByExercise.get(s.exerciseId))
+      : maxByExercise.get(s.exerciseId),
+  }))
+  const newFatigue = recalculateFatigue(payload)
   await updateFatigueCache(user.id, newFatigue)
 
   return NextResponse.json({ ...workoutSet, fatigue: newFatigue }, { status: 201 })
