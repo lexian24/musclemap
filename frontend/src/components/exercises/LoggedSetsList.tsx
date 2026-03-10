@@ -45,9 +45,16 @@ export function LoggedSetsList({ sets, onDelete }: LoggedSetsListProps) {
 
   if (sets.length === 0) {
     return (
-      <p className="text-sm text-[#555]">
-        No sets logged today. Start your workout!
-      </p>
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="w-10 h-10 rounded-full bg-white/[0.04] flex items-center justify-center mb-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/40" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </div>
+        <p className="text-sm text-muted-foreground/60">
+          No sets logged today. Start your workout!
+        </p>
+      </div>
     )
   }
 
@@ -62,26 +69,26 @@ export function LoggedSetsList({ sets, onDelete }: LoggedSetsListProps) {
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-1.5">
       {sorted.map((set) => (
         <li
           key={set.id}
-          className="flex items-center justify-between rounded-md border border-[#222] bg-[#1a1a1a] px-3 py-2"
+          className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.02] px-3.5 py-2.5 transition-colors hover:bg-white/[0.04]"
         >
-          <div>
-            <span className="text-sm font-medium text-white">{set.exerciseName}</span>
-            <span className="ml-2 text-sm text-[#FF2020]">
-              {set.sets}×{set.reps}
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-sm font-medium text-foreground truncate">{set.exerciseName}</span>
+            <span className="text-sm font-semibold text-red-400 shrink-0">
+              {set.sets}&times;{set.reps}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#666]">{timeAgo(set.loggedAt)}</span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-xs text-muted-foreground/50">{timeAgo(set.loggedAt)}</span>
             {onDelete && (
               <button
                 onClick={() => void handleDelete(set.id)}
                 disabled={deletingIds.has(set.id)}
                 aria-label={`Delete ${set.exerciseName} set`}
-                className="ml-1 text-muted-foreground/40 transition-colors hover:text-destructive disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-muted-foreground/30 transition-colors hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer p-0.5"
               >
                 <TrashIcon />
               </button>

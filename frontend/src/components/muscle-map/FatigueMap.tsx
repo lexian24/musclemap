@@ -24,19 +24,19 @@ export function FatigueMap({ fatigueState, onMuscleClick }: FatigueMapProps) {
         />
         {hoveredMuscle !== null && (
           <div
-            className="pointer-events-none absolute -right-2 top-4 translate-x-full"
+            className="pointer-events-none absolute -right-2 top-4 translate-x-full z-10"
             role="tooltip"
           >
-            <div className="rounded-lg border border-border bg-card/90 backdrop-blur-sm px-3 py-2.5 shadow-xl shadow-black/40 min-w-[120px]">
-              <p className="text-xs font-semibold text-foreground mb-1.5">
+            <div className="rounded-xl border border-white/[0.08] bg-card/95 backdrop-blur-xl px-3.5 py-3 shadow-2xl shadow-black/50 min-w-[130px]">
+              <p className="text-xs font-semibold text-foreground mb-2">
                 {muscleLabel(hoveredMuscle)}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <span
-                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full border border-white/10"
+                  className="h-3 w-3 flex-shrink-0 rounded-full ring-1 ring-white/10"
                   style={{ backgroundColor: fatigueToColor(fatigueState[hoveredMuscle]) }}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground font-medium">
                   {Math.round(fatigueState[hoveredMuscle] * 100)}% fatigued
                 </p>
               </div>
@@ -55,11 +55,11 @@ function FatigueLegend() {
   return (
     <div className="space-y-2">
       <div
-        className="h-2 w-full rounded-full"
+        className="h-2 w-full rounded-full ring-1 ring-white/[0.06]"
         style={{ background: `linear-gradient(to right, ${gradientStops})` }}
         aria-label="Fatigue color scale"
       />
-      <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+      <div className="flex justify-between text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50">
         <span>Recovered</span>
         <span>Fatigued</span>
       </div>

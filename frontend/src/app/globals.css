@@ -4,27 +4,27 @@
 
 @layer base {
   :root {
-    /* Dark theme as default — premium fitness app aesthetic */
-    --background: 220 13% 7%;          /* #0F1117 deep charcoal */
-    --foreground: 213 31% 96%;         /* #F0F6FC near-white */
-    --card: 215 14% 11%;               /* #161B22 slightly lighter */
-    --card-foreground: 213 31% 96%;    /* #F0F6FC */
-    --popover: 215 14% 11%;            /* #161B22 */
-    --popover-foreground: 213 31% 96%;
-    --primary: 0 72% 51%;              /* #DC2626 crimson */
-    --primary-foreground: 0 0% 100%;   /* white */
-    --secondary: 216 13% 15%;          /* #21262D dark muted */
-    --secondary-foreground: 213 31% 96%;
-    --muted: 216 13% 15%;              /* #21262D */
-    --muted-foreground: 213 14% 57%;   /* medium gray */
-    --accent: 216 13% 15%;             /* #21262D */
-    --accent-foreground: 213 31% 96%;
+    /* Dark theme — premium fitness app aesthetic */
+    --background: 225 15% 6%;            /* #0D0F14 deep navy-black */
+    --foreground: 210 40% 96%;           /* #F0F4FA near-white */
+    --card: 224 14% 10%;                 /* #151820 elevated surface */
+    --card-foreground: 210 40% 96%;      /* #F0F4FA */
+    --popover: 224 14% 10%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 0 72% 51%;               /* #DC2626 crimson */
+    --primary-foreground: 0 0% 100%;    /* white */
+    --secondary: 224 12% 14%;           /* #1E2028 subtle surface */
+    --secondary-foreground: 210 40% 96%;
+    --muted: 224 12% 14%;
+    --muted-foreground: 215 16% 52%;    /* #6B7A96 refined gray */
+    --accent: 224 12% 17%;             /* #262A34 hover surface */
+    --accent-foreground: 210 40% 96%;
     --destructive: 0 72% 51%;          /* #DC2626 crimson */
     --destructive-foreground: 0 0% 100%;
-    --border: 215 9% 19%;              /* #30363D subtle dark border */
-    --input: 215 9% 19%;               /* #30363D */
-    --ring: 0 72% 51%;                 /* #DC2626 crimson focus ring */
-    --radius: 0.5rem;
+    --border: 224 10% 16%;             /* #252830 subtle border */
+    --input: 224 10% 16%;
+    --ring: 0 72% 51%;                /* #DC2626 crimson focus ring */
+    --radius: 0.75rem;
   }
 }
 
@@ -42,19 +42,30 @@
 
 /* Premium scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(220 13% 7%);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(215 9% 19%);
-  border-radius: 3px;
+  background: hsl(224 10% 20%);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(213 14% 30%);
+  background: hsl(224 10% 28%);
+}
+
+/* Utility classes */
+@layer utilities {
+  .glass-card {
+    @apply rounded-2xl border border-white/[0.06] bg-card/80 backdrop-blur-xl shadow-xl shadow-black/20;
+  }
+
+  .section-title {
+    @apply font-display text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground;
+  }
 }

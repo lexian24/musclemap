@@ -24,12 +24,12 @@ export function WeeklyVolumePanel({ weeklyVolume }: WeeklyVolumePanelProps) {
 
   if (rows.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground py-2">No sets logged this week yet.</p>
+      <p className="text-xs text-muted-foreground/50 py-2">No sets logged this week yet.</p>
     )
   }
 
   return (
-    <div className="space-y-2 mt-3">
+    <div className="space-y-3">
       {rows.map(({ muscle, sets }) => {
         const target = WEEKLY_VOLUME_TARGETS[muscle]
         const { minSets: mev, optimalSets: mav, maxSets: mrv } = target
@@ -42,11 +42,11 @@ export function WeeklyVolumePanel({ weeklyVolume }: WeeklyVolumePanelProps) {
         let barColor: string
         let zoneLabel: string
         if (sets < mev) {
-          barColor = 'bg-muted-foreground/40'
+          barColor = 'bg-zinc-600'
           zoneLabel = 'Below MEV'
         } else if (sets < mav) {
-          barColor = 'bg-green-500'
-          zoneLabel = 'In MEV–MAV range'
+          barColor = 'bg-emerald-500'
+          zoneLabel = 'In MEV-MAV range'
         } else if (sets <= mrv) {
           barColor = 'bg-amber-400'
           zoneLabel = 'Near MRV'
@@ -56,24 +56,24 @@ export function WeeklyVolumePanel({ weeklyVolume }: WeeklyVolumePanelProps) {
         }
 
         return (
-          <div key={muscle} className="space-y-1">
+          <div key={muscle} className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-foreground truncate">
+              <span className="text-xs font-medium text-foreground/80 truncate">
                 {muscleLabel(muscle)}
               </span>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 {isOverMrv && (
-                  <span className="text-[10px] font-semibold text-red-400 bg-red-500/15 px-1.5 py-0.5 rounded-full leading-none">
-                    Over MRV!
+                  <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md leading-none">
+                    Over MRV
                   </span>
                 )}
-                <span className="text-xs text-muted-foreground">
-                  {sets} / {mav} sets
+                <span className="text-xs text-muted-foreground/60 tabular-nums">
+                  {sets}/{mav}
                 </span>
               </div>
             </div>
             <div
-              className="h-1.5 w-full rounded-full bg-secondary overflow-hidden"
+              className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden"
               role="progressbar"
               aria-label={`${muscleLabel(muscle)}: ${sets} sets this week. ${zoneLabel}`}
               aria-valuenow={sets}
@@ -81,7 +81,7 @@ export function WeeklyVolumePanel({ weeklyVolume }: WeeklyVolumePanelProps) {
               aria-valuemax={mrv}
             >
               <div
-                className={`h-full rounded-full transition-all ${barColor}`}
+                className={`h-full rounded-full transition-all duration-500 ease-out ${barColor}`}
                 style={{ width: `${progress * 100}%` }}
               />
             </div>

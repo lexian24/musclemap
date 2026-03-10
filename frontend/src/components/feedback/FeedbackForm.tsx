@@ -10,25 +10,6 @@ const FEEDBACK_TYPES: { value: FeedbackType; label: string }[] = [
   { value: 'general', label: 'General' },
 ]
 
-function CheckIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  )
-}
-
 export function FeedbackForm() {
   const [type, setType] = useState<FeedbackType>('general')
   const [message, setMessage] = useState('')
@@ -63,23 +44,28 @@ export function FeedbackForm() {
 
   if (success) {
     return (
-      <div className="rounded-xl border border-border bg-card p-8 shadow-lg shadow-black/20 flex flex-col items-center gap-3 text-center">
-        <span className="text-green-500">
-          <CheckIcon />
-        </span>
-        <p className="text-sm font-medium text-foreground">
-          Thank you! Your feedback has been received.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          We read every submission and use it to improve MuscleMap.
-        </p>
+      <div className="glass-card p-10 flex flex-col items-center gap-4 text-center">
+        <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400" aria-hidden="true">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            Thank you for your feedback!
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            We read every submission and use it to improve MuscleMap.
+          </p>
+        </div>
         <button
           onClick={() => {
             setSuccess(false)
             setMessage('')
             setType('general')
           }}
-          className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+          className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           Submit more feedback
         </button>
@@ -88,17 +74,15 @@ export function FeedbackForm() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20">
-      <div className="mb-4 pb-4 border-b border-border">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-          Send Feedback
-        </h2>
-      </div>
+    <div className="glass-card p-5">
+      <h2 className="section-title mb-5">
+        Send Feedback
+      </h2>
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
         {/* Type selector */}
         <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">Type</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2.5">Type</p>
           <div className="flex gap-2 flex-wrap">
             {FEEDBACK_TYPES.map(({ value, label }) => (
               <button
@@ -106,10 +90,10 @@ export function FeedbackForm() {
                 type="button"
                 onClick={() => setType(value)}
                 className={[
-                  'px-3 py-1.5 rounded-md text-sm font-medium transition-colors border',
+                  'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
                   type === value
-                    ? 'bg-primary/15 text-primary border-primary/40'
-                    : 'bg-secondary text-muted-foreground border-transparent hover:text-foreground hover:bg-secondary/80',
+                    ? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/30'
+                    : 'bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground',
                 ].join(' ')}
               >
                 {label}
@@ -132,21 +116,21 @@ export function FeedbackForm() {
             minLength={10}
             maxLength={1000}
             required
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary resize-none transition-colors"
           />
-          <p className="text-right text-xs text-muted-foreground/60 mt-1">
+          <p className="text-right text-[11px] text-muted-foreground/40 mt-1.5 tabular-nums">
             {message.length}/1000
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
-            <p className="text-sm text-destructive flex-1">{error}</p>
+          <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5">
+            <p className="text-sm text-red-400 flex-1">{error}</p>
             <button
               type="button"
               onClick={() => setError(null)}
-              className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors flex-shrink-0"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-pointer"
             >
               Dismiss
             </button>
@@ -157,9 +141,9 @@ export function FeedbackForm() {
         <button
           type="submit"
           disabled={isSubmitting || message.length < 10}
-          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-4 py-3 text-sm font-bold text-white transition-all hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
-          {isSubmitting ? 'Sending…' : 'Send Feedback'}
+          {isSubmitting ? 'Sending...' : 'Send Feedback'}
         </button>
       </form>
     </div>
