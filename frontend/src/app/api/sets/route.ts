@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { getTodaySession, logSet, getTodaySets } from '@/lib/db/sessions'
+import { getTodaySession, logSet, getRecentSets } from '@/lib/db/sessions'
 import { updateFatigueCache } from '@/lib/db/fatigue'
 import { recalculateFatigue } from '@/lib/fatigue'
 
@@ -36,12 +36,12 @@ export async function POST(request: Request) {
   const session = await getTodaySession(user.id)
   const workoutSet = await logSet(session.id, exerciseId, sets, reps)
 
-  // Recalculate fatigue from all of today's sets (including the one just inserted).
-  // The newly logged set carries the caller-supplied userMax; older sets fall back
-  // to the VOLUME_NORMALISER (no userMax stored per historical set).
-  const todaySets = await getTodaySets(user.id)
+  // Recalculate fatigue from all sets in the past FATIGUE_LOOKBACK_HOURS so that
+  // previous-day fatigue carries forward correctly. The newly logged set carries
+  // the caller-supplied userMax; older sets fall back to VOLUME_NORMALISER.
+  const recentSets = await getRecentSets(user.id)
   const newFatigue = recalculateFatigue(
-    todaySets.map((s) => ({
+    recentSets.map((s) => ({
       muscles: s.muscles,
       sets: s.sets,
       reps: s.reps,
