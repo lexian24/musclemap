@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getTodaySession, logSet, getRecentSets } from '@/lib/db/sessions'
 import { updateFatigueCache } from '@/lib/db/fatigue'
+import { getUserMaxes } from '@/lib/db/userMaxes'
 import { recalculateFatigue } from '@/lib/fatigue'
 
 const logSetSchema = z.object({
@@ -36,17 +37,24 @@ export async function POST(request: Request) {
   const session = await getTodaySession(user.id)
   const workoutSet = await logSet(session.id, exerciseId, sets, reps)
 
-  // Recalculate fatigue from all sets in the past FATIGUE_LOOKBACK_HOURS so that
-  // previous-day fatigue carries forward correctly. The newly logged set carries
-  // the caller-supplied userMax; older sets fall back to VOLUME_NORMALISER.
-  const recentSets = await getRecentSets(user.id)
+  // Fetch recent sets and stored maxes in parallel so historical sets use the
+  // intensity-zone formula (same scale as the new path) instead of falling back
+  // to the crude VOLUME_NORMALISER which produces wildly different fatigue values.
+  const [recentSets, storedMaxes] = await Promise.all([
+    getRecentSets(user.id),
+    getUserMaxes(user.id),
+  ])
+  const maxByExercise = new Map(storedMaxes.map((m) => [m.exerciseId, m.maxValue]))
+
   const newFatigue = recalculateFatigue(
     recentSets.map((s) => ({
       muscles: s.muscles,
       sets: s.sets,
       reps: s.reps,
       loggedAt: new Date(s.loggedAt),
-      userMax: s.id === workoutSet.id ? userMax : undefined,
+      // Prefer caller-supplied userMax for the new set (it may be a new PR that
+      // hasn't been persisted yet). Fall back to the stored max for all other sets.
+      userMax: s.id === workoutSet.id ? userMax : maxByExercise.get(s.exerciseId),
     })),
   )
   await updateFatigueCache(user.id, newFatigue)
