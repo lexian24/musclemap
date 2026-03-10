@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getFatigueState } from '@/lib/db/fatigue'
+import { computeFatigueFromHistory } from '@/lib/db/fatigue'
 import { getExercises } from '@/lib/db/exercises'
 import { getTodaySets, getWeeklyVolume } from '@/lib/db/sessions'
 import { getUserMaxes } from '@/lib/db/userMaxes'
@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const [fatigueState, exercises, todaySets, initialUserMaxes, weeklyVolume] = await Promise.all([
-    getFatigueState(user.id),
+    computeFatigueFromHistory(user.id),
     getExercises(),
     getTodaySets(user.id),
     getUserMaxes(user.id),
